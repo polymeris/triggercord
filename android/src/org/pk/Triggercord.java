@@ -51,6 +51,7 @@ public class Triggercord extends Activity
     }
 
     static {
+        System.loadLibrary("stlport_shared");
         System.loadLibrary("pentax");
     }
 }
