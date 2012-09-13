@@ -11,6 +11,12 @@ LIN_LDFLAGS = $(LDFLAGS)
 PY_CFLAGS = $(LIN_CFLAGS) `pkg-config --cflags python2` -I.
 PY_LDFLAGS = $(LIN_LDFLAGS) `pkg-config --libs python2`
 
+ANDROID_DIR = android
+ANDROID_SRC = $(ANDROID_DIR)/src/org/pk/
+ANDROID_ANT_FILE = $(ANDROID_DIR)/build.xml
+APK_FILE = Triggercord-debug.apk
+NDK_BUILD = ndk-build
+
 VERSION=0.78.00
 # variables for RPM creation
 TOPDIR=$(HOME)/rpmbuild
@@ -144,5 +150,20 @@ python-bindings: $(OBJS)
 	mkdir -p python
 	swig -c++ -python -o python/pentax_wrap.cpp pentax.h
 	$(CXX) -fPIC $(OBJS) python/pentax_wrap.cpp pentax.cpp $(PY_CFLAGS) $(PY_LDFLAGS) --shared -o python/_pentax.so
+
+$(ANDROID_DIR)/bin/$(APK_FILE): pentax.cpp pentax.h *.c $(ANDROID_SRC)/*.java
+	swig -c++ -java -package org.pk \
+		-outdir $(ANDROID_SRC) \
+		-o $(ANDROID_DIR)/jni/pentax_wrap.cpp pentax.h
+	NDK_PROJECT_PATH=$(ANDROID_DIR) $(NDK_BUILD)
+	ant -f $(ANDROID_ANT_FILE) debug
+
+apk: $(ANDROID_DIR)/bin/$(APK_FILE)
+
+apk-debug-install: $(ANDROID_DIR)/bin/$(APK_FILE)
+	ant -f $(ANDROID_ANT_FILE) installd
+
+apk-install: $(ANDROID_DIR)/bin/$(APK_FILE)
+	ant -f $(ANDROID_ANT_FILE) installr
 
 	
