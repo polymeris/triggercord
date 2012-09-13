@@ -8,6 +8,9 @@ MAN1DIR = $(MANDIR)/man1
 LIN_CFLAGS = $(CFLAGS)
 LIN_LDFLAGS = $(LDFLAGS)
 
+PY_CFLAGS = $(LIN_CFLAGS) `pkg-config --cflags python2` -I.
+PY_LDFLAGS = $(LIN_LDFLAGS) `pkg-config --libs python2`
+
 VERSION=0.78.00
 # variables for RPM creation
 TOPDIR=$(HOME)/rpmbuild
@@ -136,3 +139,10 @@ win: clean
 	rm -f $(WINDIR).zip
 	zip -rj $(WINDIR).zip $(WINDIR)
 	rm -r $(WINDIR)
+
+python-bindings: $(OBJS)
+	mkdir -p python
+	swig -c++ -python -o python/pentax_wrap.cpp pentax.h
+	$(CXX) -fPIC $(OBJS) python/pentax_wrap.cpp pentax.cpp $(PY_CFLAGS) $(PY_LDFLAGS) --shared -o python/_pentax.so
+
+	
