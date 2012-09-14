@@ -3,25 +3,77 @@
     android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
     >
-<TextView
-    android:id="@+id/StatusText"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:text="..."
-    />
-<Spinner
-    android:id="@+id/ApertureSpinner"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    />
-<Button
-    android:id="@+id/TriggerButton"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:state_enabled="false"
-    android:text="Shoot!"
-    android:onClick="shoot" />
-    />
+        <TextView
+            android:id="@+id/ModeText"
+            android:layout_width="32dp"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center"
+            android:textSize="24dp"
+            android:text="P"
+        />
+        <Spinner
+            android:id="@+id/IsoSpinner"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+        />
+        <Spinner
+            android:id="@+id/ApertureSpinner"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+        />
+        <Spinner
+            android:id="@+id/ShutterSpinner"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+        />
+    </LinearLayout>
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+    >
+<!--
+        <ImageView
+            android:id="@+id/PhotoView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_centerInParent="true"
+        />
+-->
+        <TextView
+            android:id="@+id/StatusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom ="true"
+            android:layout_alignParentLeft="true"
+            android:text="Loading..."
+        />
+        <Button
+            android:id="@+id/TriggerButton"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_alignParentBottom ="true"
+            android:layout_alignParentRight="true"
+            android:background="@layout/triggershape"
+            android:text="Shoot!"
+            android:onClick="shoot"
+        />
+        <Button
+            android:id="@+id/FocusButton"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_alignParentBottom ="true"
+            android:layout_toLeftOf="@+id/TriggerButton"
+            android:background="@layout/triggershape"
+            android:text="Focus"
+            android:onClick="focus"
+        />
+    </RelativeLayout>
 </LinearLayout>
 
