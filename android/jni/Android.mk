@@ -11,7 +11,7 @@ LOCAL_SRC_FILES := 	\
 	../../pslr_lens.c \
 	../../pslr_model.c \
 	../../pslr_scsi.c 
-LOCAL_CPPFLAGS  := -frtti -I.. -Istlport
+LOCAL_CPPFLAGS  := -DANDROID -frtti -I.. -Istlport
 LOCAL_LDLIBS	:= -llog -lstdc++
 
 include $(BUILD_SHARED_LIBRARY)
