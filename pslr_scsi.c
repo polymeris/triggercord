@@ -25,6 +25,8 @@
 
 #ifdef WIN32
 #include "pslr_scsi_win.c"
+#elif ANDROID
+#include "pslr_scsi_android.c"
 #else
 #include "pslr_scsi_linux.c"
 #endif
