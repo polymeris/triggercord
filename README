@@ -1,7 +1,9 @@
 What is Triggercord?
 ===================
 A new project, in early development stage.
+
 A port of pktriggercord[1] to Android.
+
 A tethering application for Pentax K and Samsung GX series DSLRs.
 
 It consists of the pktriggercord based camera interface, a wrapper to a high-level API, and a android program that takes care of user interface.
@@ -17,15 +19,21 @@ Goals
 Feature Roadmap
 -----------------
 ### Core (pktriggercord)
+
 Implemented:
+
 	* ioctl based scsi interface
 	* K-30 support
 
 ### High-level API
+
 Implemented:
+
 	* Focusing and shooting
 	* Setting exposure parameters
+	
 Planned:
+
 	* Saving buffers
 	* Setting metering mode
 	* Setting autofocus mode
@@ -33,7 +41,9 @@ Planned:
 	* Setting output file format
 	* Setting output destinaton
 	* Reading parameters
+	
 Suggested:
+
 	* Setting jpeg adjustments
 	* Setting jpeg resolution and quality
 	* Setting jpeg image tone
@@ -41,9 +51,13 @@ Suggested:
 	* Intervalometer
 
 ### UI
+
 Implemented:
+
 	* Main view
+	
 Planned:
+
 	* Secondary, review screen
 	* Custom spinners with auto option
 	* Custom buttons with secondary (long-press) functionality
@@ -65,9 +79,11 @@ Support for the latest models (K-30, K-5II, K-5IIs) is yet incomplete.
 Known bugs
 ----------
 pktriggercord:
+
  * Pentax K-r ISO can't be changed in M mode
  * K-30 support is buggy
  * Green button not functional
 
 [1] http://pktriggercord.sourceforge.net, see also, PK-Remote
+
 [2] Supported models: GX-10, GX-20, K10D, K20D, K200D, K-2000, K-30, K-5, K-7, K-m, K-r, K-x, ist DS
