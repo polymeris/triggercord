@@ -1,0 +1,73 @@
+What is Triggercord?
+===================
+A new project, in early development stage.
+A port of pktriggercord[1] to Android.
+A tethering application for Pentax K and Samsung GX series DSLRs.
+
+It consists of the pktriggercord based camera interface, a wrapper to a high-level API, and a android program that takes care of user interface.
+
+The high level API is also exposed in python, mostly for testing purposes.
+
+Goals
+-----
+ * Clean, simple user interface
+ * Support for as many android devices and Pentax K cameras as possible
+ * Intent-based extensibility
+
+Feature Roadmap
+-----------------
+### Core (pktriggercord)
+Implemented:
+	* ioctl based scsi interface
+	* K-30 support
+
+### High-level API
+Implemented:
+	* Focusing and shooting
+	* Setting exposure parameters
+Planned:
+	* Saving buffers
+	* Setting metering mode
+	* Setting autofocus mode
+	* Setting drive mode
+	* Setting output file format
+	* Setting output destinaton
+	* Reading parameters
+Suggested:
+	* Setting jpeg adjustments
+	* Setting jpeg resolution and quality
+	* Setting jpeg image tone
+	* Bracketing
+	* Intervalometer
+
+### UI
+Implemented:
+	* Main view
+Planned:
+	* Secondary, review screen
+	* Custom spinners with auto option
+	* Custom buttons with secondary (long-press) functionality
+	* Image settings menu
+	* Application settings menu
+
+Android compatibility
+---------------------
+Android >= 3.1 is required. The device needs to be able to work in USB host mode.
+
+Camera support
+--------------
+pktriggercord, which forms the base for Triggercord's camera interface code, supports most Pentax K mount DSLRs, including Samsung rebadged models, in one form or another[2]. Notable exceptions are early entry-level cameras (K100D, K110D) and the ist series, which are only partially supported.
+
+Triggercord will focus on support for K-5 and newer models.
+
+Support for the latest models (K-30, K-5II, K-5IIs) is yet incomplete.
+
+Known bugs
+----------
+pktriggercord:
+ * Pentax K-r ISO can't be changed in M mode
+ * K-30 support is buggy
+ * Green button not functional
+
+[1] http://pktriggercord.sourceforge.net, see also, PK-Remote
+[2] Supported models: GX-10, GX-20, K10D, K20D, K200D, K-2000, K-30, K-5, K-7, K-m, K-r, K-x, ist DS
