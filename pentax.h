@@ -50,8 +50,8 @@ public:
         float compensation = 0.0);
 
     void setAutofocus(
-        int mode = SINGLE,
-        int point = AUTO);
+        int mode,
+        int point = CENTER);
 
     void setAperture(float aperture);
     void setShutter(float shutter);
@@ -59,10 +59,12 @@ public:
     void setExposureCompensation(float ec);
     void setAutofocusPoint(int point);
 
-    //~ void setRaw(bool enabled);
+    void setRaw(bool enabled);
     void setJpegAdjustments(
         int saturation, int hue,
         int contrast, int sharpness);
+
+    void setFileDestination(std::string path);
 
     float aperture();
     float shutter();
@@ -78,6 +80,7 @@ protected:
     Camera();
     friend const Camera * camera();
 
+    void updateStatus();
     void updateExposureMode();
 };
 

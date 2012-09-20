@@ -6,6 +6,7 @@ extern "C"
 }
 
 #include "pentax.h"
+#include <ctime>
 #include <cstdlib>
 
 #define IS_AUTO(x) ((x) < 0)
@@ -29,8 +30,9 @@ extern "C"
 
 static std::string theModel = "none";
 static char *theDevice = NULL;
-
+static time_t theLastUpdateTime = -1;
 static pslr_handle_t theHandle;
+static pslr_status theStatus;
 static Camera * theCamera = NULL;
 
 pslr_rational_t rational;
@@ -54,6 +56,7 @@ void Camera::updateExposureMode()
     bool aS = shutterIsAuto;
     bool aI = isoIsAuto;
     pslr_exposure_mode_t m;
+    updateStatus();
 
     if      (!aA && !aS && !aI)
 	m = PSLR_EXPOSURE_MODE_M;
@@ -67,6 +70,15 @@ void Camera::updateExposureMode()
 	m = PSLR_EXPOSURE_MODE_SV;
     m = PSLR_EXPOSURE_MODE_P;
     pslr_set_exposure_mode(theHandle, m);
+}
+
+void Camera::updateStatus()
+{
+    if (theLastUpdateTime - time(NULL))
+    {
+	pslr_get_status(theHandle, &theStatus);
+	theLastUpdateTime = time(NULL);
+    }
 }
 
 const Camera * camera()
@@ -92,6 +104,7 @@ const Camera * camera()
 Camera::Camera()
 {
     pslr_connect(theHandle);
+    updateStatus();
 }
 
 Camera::~Camera()
@@ -223,6 +236,14 @@ void Camera::setAutofocusPoint(int pt)
 {
 }
 
+void Camera::setRaw(bool enabled)
+{
+}
+
+void Camera::setFileDestination(std::string path)
+{
+}    
+
 void Camera::setJpegAdjustments(int sat, int hue, int con, int sha)
 {
     if (sat != KEEP)
@@ -237,42 +258,49 @@ void Camera::setJpegAdjustments(int sat, int hue, int con, int sha)
 
 float Camera::aperture()
 {
+    updateStatus();
     LOGW("Calling stub method.");
     return 4.2;
 }
 
 float Camera::shutter()
 {
+    updateStatus();
     LOGW("Calling stub method.");
     return .42;
 }
 
 float Camera::iso()
 {
+    updateStatus();
     LOGW("Calling stub method.");
     return 420;
 }
 
 float Camera::exposureCompensation()
 {
+    updateStatus();
     LOGW("Calling stub method.");
     return .42;
 }
 
 int Camera::focusPoint()
 {
+    updateStatus();
     LOGW("Calling stub method.");
     return 4;
 }
 
 int Camera::meteringMode()
 {
+    updateStatus();
     LOGW("Calling stub method.");
     return Camera::AUTO;
 }
 
 int Camera::autofocusMode()
 {
+    updateStatus();
     LOGW("Calling stub method.");
     return Camera::AUTO;
 }
