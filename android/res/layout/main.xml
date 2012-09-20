@@ -12,40 +12,73 @@
     >
         <TextView
             android:id="@+id/ModeText"
-            android:layout_width="32dp"
+            android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:layout_gravity="center"
             android:textSize="24dp"
             android:text="P"
+            android:paddingRight="4dp"
+        />
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:src="@drawable/iso"
+            android:paddingLeft="4dp"
         />
         <Spinner
             android:id="@+id/IsoSpinner"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
+            android:paddingRight="4dp"
+        />
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:src="@drawable/fover"
+            android:paddingLeft="4dp"
         />
         <Spinner
             android:id="@+id/ApertureSpinner"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
+            android:paddingRight="4dp"
+        />
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:src="@drawable/oneover"
+            android:paddingLeft="4dp"
         />
         <Spinner
             android:id="@+id/ShutterSpinner"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
+            android:paddingRight="4dp"
+        />
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:src="@drawable/ec"
+            android:paddingLeft="4dp"
+        />
+        <Spinner
+            android:id="@+id/ECSpinner"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:paddingRight="4dp"
         />
     </LinearLayout>
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
     >
-<!--
         <ImageView
             android:id="@+id/PhotoView"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_centerInParent="true"
+            android:src="@drawable/icon"
         />
--->
         <TextView
             android:id="@+id/StatusText"
             android:layout_width="wrap_content"
@@ -60,7 +93,6 @@
             android:layout_height="96dp"
             android:layout_alignParentBottom ="true"
             android:layout_alignParentRight="true"
-            android:background="@layout/triggershape"
             android:text="Shoot!"
             android:onClick="shoot"
         />
@@ -70,7 +102,6 @@
             android:layout_height="64dp"
             android:layout_alignParentBottom ="true"
             android:layout_toLeftOf="@+id/TriggerButton"
-            android:background="@layout/triggershape"
             android:text="Focus"
             android:onClick="focus"
         />
