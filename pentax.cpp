@@ -11,24 +11,6 @@ extern "C"
 
 #define IS_AUTO(x) ((x) < 0)
 
-#ifndef ANDROID
-    #define LOGD(msg) printf("Debug: %s\n", msg)
-    #define LOGI(msg) printf("%s\n", msg)
-    #define LOGW(msg) printf("Warning: %s\n", msg)
-    #define LOGE(msg) printf("Error: %s\n", msg)
-#else
-    #include <android/log.h>
-    #define LOGD(msg) \
-	__android_log_print(ANDROID_LOG_DEBUG, "Pentax", msg)
-    #define LOGI(msg) \
-	__android_log_print(ANDROID_LOG_INFO, "Pentax", msg)
-    #define LOGW(msg) \
-	__android_log_print(ANDROID_LOG_WARN, "Pentax", msg)
-    #define LOGE(msg) \
-	__android_log_print(ANDROID_LOG_ERROR, "Pentax", msg)
-#endif
-
-static std::string theModel = "none";
 static char *theDevice = NULL;
 static time_t theLastUpdateTime = -1;
 static pslr_handle_t theHandle;
@@ -47,7 +29,7 @@ bool apertureIsAuto, shutterIsAuto, isoIsAuto;
 
 const std::string & Camera::model()
 {
-    return theModel;
+    return std::string(pslr_camera_name(theHandle));
 }
 
 void Camera::updateExposureMode()
@@ -83,20 +65,18 @@ void Camera::updateStatus()
 
 const Camera * camera()
 {
-    char * model = NULL;
-    if(!theCamera && (theHandle = pslr_init(model, theDevice)))
+    if(!theCamera && (theHandle = pslr_init(NULL, theDevice)))
     {
 	atexit(cleanup);
 	theCamera = new Camera();
-	theModel = std::string(model);
     }
 
     if (!theCamera)
-	LOGW("Camera not found.");
+	DPRINT("Camera not found.");
     else
     {
-	LOGI("Found camera:");
-	LOGI(model);
+	DPRINT("Found camera!");
+	DPRINT(theCamera->model().c_str());
     }
     return theCamera;
 }
@@ -259,48 +239,48 @@ void Camera::setJpegAdjustments(int sat, int hue, int con, int sha)
 float Camera::aperture()
 {
     updateStatus();
-    LOGW("Calling stub method.");
+    DPRINT("Calling stub method.");
     return 4.2;
 }
 
 float Camera::shutter()
 {
     updateStatus();
-    LOGW("Calling stub method.");
+    DPRINT("Calling stub method.");
     return .42;
 }
 
 float Camera::iso()
 {
     updateStatus();
-    LOGW("Calling stub method.");
+    DPRINT("Calling stub method.");
     return 420;
 }
 
 float Camera::exposureCompensation()
 {
     updateStatus();
-    LOGW("Calling stub method.");
+    DPRINT("Calling stub method.");
     return .42;
 }
 
 int Camera::focusPoint()
 {
     updateStatus();
-    LOGW("Calling stub method.");
+    DPRINT("Calling stub method.");
     return 4;
 }
 
 int Camera::meteringMode()
 {
     updateStatus();
-    LOGW("Calling stub method.");
+    DPRINT("Calling stub method.");
     return Camera::AUTO;
 }
 
 int Camera::autofocusMode()
 {
     updateStatus();
-    LOGW("Calling stub method.");
+    DPRINT("Calling stub method.");
     return Camera::AUTO;
 }

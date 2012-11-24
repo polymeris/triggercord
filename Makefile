@@ -151,7 +151,10 @@ python-bindings: $(OBJS)
 	swig -c++ -python -o python/pentax_wrap.cpp pentax.h
 	$(CXX) -fPIC $(OBJS) python/pentax_wrap.cpp pentax.cpp $(PY_CFLAGS) $(PY_LDFLAGS) --shared -o python/_pentax.so
 
-$(ANDROID_DIR)/bin/$(APK_FILE): pentax.cpp pentax.h *.c $(ANDROID_SRC)/*.java
+$(ANDROID_DIR)/build.xml:
+	android update project --path $(ANDROID_DIR) --target android-12
+
+$(ANDROID_DIR)/bin/$(APK_FILE): pentax.cpp pentax.h *.c $(ANDROID_SRC)/*.java $(ANDROID_DIR)/build.xml
 	swig -c++ -java -package org.pk \
 		-outdir $(ANDROID_SRC) \
 		-o $(ANDROID_DIR)/jni/pentax_wrap.cpp pentax.h

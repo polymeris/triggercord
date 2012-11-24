@@ -147,8 +147,7 @@ char **get_drives(int *driveNum) {
     return ret;
 }
 
-pslr_result get_drive_info(char* driveName, int* hDevice, 
-                            char* vendorId, int vendorIdSizeMax,
+pslr_result get_drive_info(char* driveName, char* vendorId, int vendorIdSizeMax,
                             char* productId, int productIdSizeMax
                            )
 {
@@ -224,6 +223,11 @@ pslr_result get_drive_info(char* driveName, int* hDevice,
        }
     }	
     return drive_status;
+}
+
+pslr_result open_drive(int* hDevice, char * driveName)
+{
+    //TODO
 }
 
 void close_drive(int *hDevice)

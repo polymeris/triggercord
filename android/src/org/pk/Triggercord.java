@@ -39,7 +39,7 @@ public class Triggercord extends Activity
         }
         else
         {
-            status.setText("Camera found!");
+            status.setText("Found camera: ");
             status.append(camera.model());
             trigger.setEnabled(true);
         }
