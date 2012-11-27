@@ -176,11 +176,13 @@ pslr_result open_drive(int* hDevice, char * driveName)
     
     *hDevice = open(nmbuf, O_RDWR);
     if( *hDevice == -1) {
-        snprintf(sudocmd, sizeof (sudocmd), "su -c \"chmod 666 %s\"", nmbuf);
-        DPRINT("Need root! Executing %s", sudocmd);
-        system(&sudocmd);
-        *hDevice = open(nmbuf, O_RDWR);
-
+        #ifdef ANDROID
+            snprintf(sudocmd, sizeof (sudocmd), "su -c \"chmod 666 %s\"", nmbuf);
+            DPRINT("Need root! Executing %s", sudocmd);
+            system(&sudocmd);
+            *hDevice = open(nmbuf, O_RDWR);
+        #endif
+        
         if( *hDevice == -1)
             return PSLR_DEVICE_ERROR;
     }

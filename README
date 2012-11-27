@@ -48,7 +48,7 @@ Suggested:
 	* Setting jpeg resolution and quality
 	* Setting jpeg image tone
 	* Bracketing
-	* Intervalometer
+	* Intervalometer & other tools
 
 ### UI
 
@@ -63,6 +63,7 @@ Planned:
 	* Custom buttons with secondary (long-press) functionality
 	* Image settings menu
 	* Application settings menu
+	* Satisfy the camera intent
 
 Android compatibility
 ---------------------

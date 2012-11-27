@@ -1,4 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Triggercord</string>
+    <string name="iso">ISO</string>
+    <string name="pMode">P</string>
+    <string name="svMode">Sv</string>
+    <string name="avMode">Av</string>
+    <string name="tvMode">Tv</string>
+    <string name="tavMode">TAv</string>
+    <string name="mMode">M</string>
+    <string name="fover">f/</string>
+    <string name="oneover">1/</string>
+    <string name="ec">EC</string>
+    <string name="latestPhoto">Latest Photo</string>
+    <string name="loading">Loading&#8230;</string>
+    <string name="shoot">Shoot</string>
+    <string name="focus">Focus</string>
+    <string name="meteringMode">Metering Mode</string>
+    <string name="raw">RAW</string>
+    <string name="rawplus">RAW+</string>
+    <string name="jpegOnly">JPEG Only</string>
+    <string name="buffer">Buffer</string>
+    <string name="quality">Quality</string>
 </resources>
