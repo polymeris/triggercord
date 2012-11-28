@@ -27,6 +27,7 @@ pktriggercord-cli - command-line Pentax DSLR tethering software
 .OP \-\-white_balance_mode WB_MODE
 .OP \-\-white_balance_adjustment WB_ADJ
 .OP \-\-auto_focus
+.OP \-\-reconnect
 .OP \-\-green
 [\fB\-\-warnings\fR | \fB\-\-nowarnings\fR ]
 [\fB\-\-version\fR | \fB\-\-help\fR | \fB\-\-dust_removal\fR | \fB\-\-status\fR |
@@ -54,7 +55,7 @@ By default the software connects to the first available Pentax camera\.
 .RS 4
 Specify the camera model. Useful if more than one camera is connected.
 Valid ( case-insensitive ) values are: K20d, K10d, GX10, GX20, K-X,
-K200D, K-7, K-r, K-5, K-2000, K-m, K100D, K110D\.
+K200D, K-7, K-r, K-5, K-2000, K-m, K-30, K100D, K110D\.
 .RE
 .PP
 \fB\-\-device \fR\fB\fIDEVICE\fR
@@ -85,6 +86,11 @@ bracketing groups.
 \fB\-f\fR, \fB\-\-auto_focus\fR
 .RS 4
 Autofocus before first shot.
+.RE
+.PP
+\fB\-\-reconnect\fR
+.RS 4
+Reconnect between shots. Might solve image artifact problems.
 .RE
 .PP
 \fB\-g\fR, \fB\-\-green\fR

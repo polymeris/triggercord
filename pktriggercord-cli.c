@@ -88,6 +88,7 @@ static struct option const longopts[] ={
     {"model", required_argument, NULL, 16},
     {"nowarnings", no_argument, NULL, 17},
     {"device", required_argument, NULL, 18},
+    {"reconnect", no_argument, NULL, 19},
     { NULL, 0, NULL, 0}
 };
 
@@ -201,7 +202,7 @@ int main(int argc, char **argv) {
     uint32_t white_balance_adjustment_ba = 0;
     uint32_t adj1;
     uint32_t adj2;
-
+    bool reconnect = false;
     // just parse warning, debug flags
     while  ((optc = getopt_long(argc, argv, shortopts, longopts, NULL)) != -1) {
         switch (optc) {
@@ -374,6 +375,10 @@ int main(int argc, char **argv) {
             case 18:
                  device = optarg;
                  break;
+
+	    case 19:
+		reconnect = true;
+		break;
 
             case 'q':
                 quality  = atoi(optarg);
@@ -668,6 +673,13 @@ int main(int argc, char **argv) {
     for (frameNo = 0; frameNo < frames; ++frameNo) {
 	gettimeofday(&current_time, NULL);
 	if( bracket_count <= bracket_index ) {
+	    if( reconnect ) {
+		camera_close( camhandle );
+		while (!(camhandle = pslr_init( model, device ))) {
+		    sleep_sec(1);
+		}
+		pslr_connect(camhandle);
+	    }
 	    waitsec = 1.0 * delay - timeval_diff(&current_time, &prev_time) / 1000000.0;
 	    if( waitsec > 0 ) {
 		printf("Waiting for %.2f sec\n", waitsec);	   
@@ -761,7 +773,7 @@ void usage(char *name) {
     printf("\nUsage: %s [OPTIONS]\n\n\
 Shoot a Pentax DSLR and send the picture to standard output.\n\
 \n\
-      --model=CAMERA_MODEL              valid values are: K20d, K10d, GX10, GX20, K-X, K200D, K-7, K-r, K-5, K-2000, K-m, K100D, K110D\n\
+      --model=CAMERA_MODEL              valid values are: K20d, K10d, GX10, GX20, K-X, K200D, K-7, K-r, K-5, K-2000, K-m, K-30, K100D, K110D\n\
       --device=DEVICE                   valid values for Linux: sg0, sg1, ..., for Windows: C, D, E, ...\n\
   -w, --warnings                        warning mode on\n\
       --nowarnings                      warning mode off\n\
@@ -784,6 +796,7 @@ Shoot a Pentax DSLR and send the picture to standard output.\n\
       --white_balance_mode=WB_MODE      valid values are: Auto, Daylight, Shade, Cloudy, Fluorescent_D, Fluorescent_N, Fluorescent_W, Fluorescent_L, Tungsten, Flash, Manual, CTE\n\
       --white_balance_adjustment=WB_ADJ valid values like: G5B2, G3A5, B5, A3, G5, M4...\n\
   -f, --auto_focus                      autofocus\n\
+      --reconnect                       reconnect between shots\n\
   -g, --green                           green button\n\
   -s, --status                          print status info\n\
       --status_hex                      print status hex info\n\
@@ -800,7 +813,7 @@ Shoot a Pentax DSLR and send the picture to standard output.\n\
 
 void version(char *name) {
     printf("\n%s %s\n\n\
-Copyright (C) 2011 Andras Salamon\n\
+Copyright (C) 2011-2012 Andras Salamon\n\
 License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>\n\
 This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n\

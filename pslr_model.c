@@ -5,6 +5,7 @@
 
     Support for K200D added by Jens Dreyer <jens.dreyer@udo.edu> 04/2011
     Support for K-r added by Vincenc Podobnik <vincenc.podobnik@gmail.com> 06/2011
+    Support for K-30 added by Camilo Polymeris <cpolymeris@gmail.com> 09/2012
 
     based on:
 
@@ -49,7 +50,7 @@ ipslr_model_info_t camera_models[] = {
     { 0x12e76, "K-5",      0, 444, 4, {16, 10, 6, 2}, 9, 8000, 100,12800,  80, 51200, PSLR_JPEG_IMAGE_TONE_BLEACH_BYPASS, ipslr_status_parse_k5   },
     { 0x12d72, "K-2000",   0, 412, 3, {10, 6, 2},     9, 4000, 100, 3200, 100,  3200, PSLR_JPEG_IMAGE_TONE_MONOCHROME,    ipslr_status_parse_km    },
     { 0x12d73, "K-m",      0, 412, 3, {10, 6, 2},     9, 4000, 100, 3200, 100,  3200, PSLR_JPEG_IMAGE_TONE_MONOCHROME,    ipslr_status_parse_km    },
-    { 0x12f52, "K-30",     0, 452,   3, {16, 12, 8, 5}, 9, 6000, 100, 12800, 100, 25600, PSLR_JPEG_IMAGE_TONE_BLEACH_BYPASS, ipslr_status_parse_k30},
+    { 0x12f52, "K-30",     0, 452, 3, {16, 12, 8, 5}, 9, 6000, 100,12800, 100, 25600, PSLR_JPEG_IMAGE_TONE_BLEACH_BYPASS, ipslr_status_parse_k30},
 // only limited support from here
     { 0x12994, "*ist D",   1, 0,   3, {6, 4, 2}, 3, 4000, 200, 3200, 200, 3200, -1, NULL},
     { 0x12b60, "*ist DS2", 1, 0,   3, {6, 4, 2}, 5, 4000, 200, 3200, 200, 3200, PSLR_JPEG_IMAGE_TONE_BRIGHT, NULL},
@@ -359,7 +360,7 @@ void ipslr_status_parse_k5(ipslr_handle_t *p, pslr_status *status) {
     memset(status, 0, sizeof (*status));	
     ipslr_status_parse_common( p, status, 0 );
     status->zoom.nom = get_uint32(&buf[0x1A0]);
-    status->zoom.denom = get_uint32(&buf[0x1AC]); // or 0x1A4?
+    status->zoom.denom = get_uint32(&buf[0x1A4]);
     status->focus = get_int32(&buf[0x1A8]); // ?
     status->lens_id1 = (get_uint32( &buf[0x190])) & 0x0F;
     status->lens_id2 = get_uint32( &buf[0x19C]);

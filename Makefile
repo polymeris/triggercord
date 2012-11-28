@@ -17,7 +17,7 @@ ANDROID_ANT_FILE = $(ANDROID_DIR)/build.xml
 APK_FILE = Triggercord-debug.apk
 NDK_BUILD = ndk-build
 
-VERSION=0.78.00
+VERSION=0.79.01
 # variables for RPM creation
 TOPDIR=$(HOME)/rpmbuild
 SPECFILE=pktriggercord.spec
@@ -131,7 +131,7 @@ pktriggercord_commandline.html: pktriggercord-cli.1
 	groff $< -man -Thtml -mwww -P "-lr" > $@
 
 # Windows cross-compile
-win: clean
+win: clean pktriggercord_commandline.html
 	$(WINGCC) $(WIN_CFLAGS) -c pslr_lens.c
 	$(WINGCC) $(WIN_CFLAGS) -c pslr_scsi.c
 	$(WINGCC) $(WIN_CFLAGS) -c pslr_enum.c
@@ -140,7 +140,7 @@ win: clean
 	$(WINGCC) -mms-bitfields -DVERSION='"$(VERSION)"'  pktriggercord-cli.c $(OBJS) -o pktriggercord-cli.exe $(WIN_CFLAGS) $(WIN_LDFLAGS) -L.
 	$(WINGCC) -mms-bitfields -DVERSION='"$(VERSION)"' -DDATADIR=\".\" pktriggercord.c $(OBJS) -o pktriggercord.exe $(WIN_GUI_CFLAGS) $(WIN_LDFLAGS) -L.
 	mkdir -p $(WINDIR)
-	cp pktriggercord.exe pktriggercord-cli.exe pktriggercord.glade Changelog COPYING $(WINDIR)
+	cp pktriggercord.exe pktriggercord-cli.exe pktriggercord.glade Changelog COPYING pktriggercord_commandline.html $(WINDIR)
 	cp $(WIN_DLLS_DIR)/*.dll $(WINDIR)
 	rm -f $(WINDIR).zip
 	zip -rj $(WINDIR).zip $(WINDIR)
