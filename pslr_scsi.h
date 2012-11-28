@@ -55,9 +55,11 @@ int scsi_write(int sg_fd, uint8_t *cmd, uint32_t cmdLen,
 
 char **get_drives(int *driveNum);
 
-pslr_result get_drive_info(char* driveName, int* hDevice, 
+pslr_result get_drive_info(char* driveName, 
                             char* vendorId, int vendorIdSizeMax,
                             char* productId, int productIdSizeMax);
+
+pslr_result open_drive(int* hDevice, char * driveName);
 
 void close_drive(int *hDevice);
 #endif

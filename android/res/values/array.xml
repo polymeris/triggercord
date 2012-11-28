@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="MeteringModeArray">
+        <item >@drawable/pattern</item>
+        <item >@drawable/centerweighted</item>
+        <item >@drawable/spot</item>
+    </string-array>
+    
+</resources>

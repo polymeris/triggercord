@@ -11,31 +11,11 @@ extern "C"
 
 #define IS_AUTO(x) ((x) < 0)
 
-#ifndef ANDROID
-    #define LOGD(msg) printf("Debug: %s\n", msg)
-    #define LOGI(msg) printf("%s\n", msg)
-    #define LOGW(msg) printf("Warning: %s\n", msg)
-    #define LOGE(msg) printf("Error: %s\n", msg)
-#else
-    #include <android/log.h>
-    #define LOGD(msg) \
-	__android_log_print(ANDROID_LOG_DEBUG, "Pentax", msg)
-    #define LOGI(msg) \
-	__android_log_print(ANDROID_LOG_INFO, "Pentax", msg)
-    #define LOGW(msg) \
-	__android_log_print(ANDROID_LOG_WARN, "Pentax", msg)
-    #define LOGE(msg) \
-	__android_log_print(ANDROID_LOG_ERROR, "Pentax", msg)
-#endif
-
-static std::string theModel = "none";
 static char *theDevice = NULL;
 static time_t theLastUpdateTime = -1;
 static pslr_handle_t theHandle;
 static pslr_status theStatus;
 static Camera * theCamera = NULL;
-
-pslr_rational_t rational;
 
 void cleanup()
 {
@@ -47,7 +27,7 @@ bool apertureIsAuto, shutterIsAuto, isoIsAuto;
 
 const std::string & Camera::model()
 {
-    return theModel;
+    return std::string(pslr_camera_name(theHandle));
 }
 
 void Camera::updateExposureMode()
@@ -83,20 +63,18 @@ void Camera::updateStatus()
 
 const Camera * camera()
 {
-    char * model = NULL;
-    if(!theCamera && (theHandle = pslr_init(model, theDevice)))
+    if(!theCamera && (theHandle = pslr_init(NULL, theDevice)))
     {
 	atexit(cleanup);
 	theCamera = new Camera();
-	theModel = std::string(model);
     }
 
     if (!theCamera)
-	LOGW("Camera not found.");
+	DPRINT("Camera not found.");
     else
     {
-	LOGI("Found camera:");
-	LOGI(model);
+	DPRINT("Found camera!");
+	DPRINT(theCamera->model().c_str());
     }
     return theCamera;
 }
@@ -158,6 +136,8 @@ void Camera::setAperture(float a)
 	apertureIsAuto = false;
 	updateExposureMode();
     }
+
+    pslr_rational_t rational;
     if (a >= 11.0)
     {
 	rational.nom = int(a);
@@ -188,6 +168,8 @@ void Camera::setShutter(float s)
 	shutterIsAuto = true;
 	updateExposureMode();
     }
+
+    pslr_rational_t rational;
     if (s < 5)
     {
 	rational.nom = 10;
@@ -227,6 +209,7 @@ void Camera::setIso(int i, int min, int max)
 
 void Camera::setExposureCompensation(float ec)
 {
+    pslr_rational_t rational;
     rational.nom = int(ec * 10);
     rational.denom = 10;
     pslr_set_ec(theHandle, rational);
@@ -234,10 +217,17 @@ void Camera::setExposureCompensation(float ec)
 
 void Camera::setAutofocusPoint(int pt)
 {
+    if (pt == KEEP)
+	return;
+    pslr_select_af_point(theHandle, pt);
 }
 
 void Camera::setRaw(bool enabled)
 {
+    if (enabled)
+	pslr_set_image_format(theHandle, PSLR_IMAGE_FORMAT_RAW_PLUS);
+    else
+	pslr_set_image_format(theHandle, PSLR_IMAGE_FORMAT_JPEG);
 }
 
 void Camera::setFileDestination(std::string path)
@@ -256,51 +246,49 @@ void Camera::setJpegAdjustments(int sat, int hue, int con, int sha)
 	pslr_set_jpeg_sharpness(theHandle, sha);
 }
 
+float rationalAsFloat(pslr_rational_t rat)
+{
+    return float(rat.nom) / float(rat.denom);
+}
+
 float Camera::aperture()
 {
     updateStatus();
-    LOGW("Calling stub method.");
-    return 4.2;
+    return rationalAsFloat(theStatus.current_aperture);
 }
 
 float Camera::shutter()
 {
     updateStatus();
-    LOGW("Calling stub method.");
-    return .42;
+    return rationalAsFloat(theStatus.current_shutter_speed);    
 }
 
 float Camera::iso()
 {
     updateStatus();
-    LOGW("Calling stub method.");
-    return 420;
+    return float(theStatus.current_iso);
 }
 
 float Camera::exposureCompensation()
 {
     updateStatus();
-    LOGW("Calling stub method.");
-    return .42;
+    return rationalAsFloat(theStatus.ec);
 }
 
 int Camera::focusPoint()
 {
     updateStatus();
-    LOGW("Calling stub method.");
-    return 4;
+    return theStatus.selected_af_point;
 }
 
 int Camera::meteringMode()
 {
     updateStatus();
-    LOGW("Calling stub method.");
-    return Camera::AUTO;
+    return theStatus.exposure_mode;
 }
 
 int Camera::autofocusMode()
 {
     updateStatus();
-    LOGW("Calling stub method.");
-    return Camera::AUTO;
+    return theStatus.af_mode;
 }

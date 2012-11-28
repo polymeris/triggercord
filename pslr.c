@@ -253,13 +253,15 @@ pslr_handle_t pslr_init( char *model, char *device ) {
     }
     int i;
     for( i=0; i<driveNum; ++i ) {
-	pslr_result result = get_drive_info( drives[i], &fd, vendorId, sizeof(vendorId), productId, sizeof(productId));
+	pslr_result result = get_drive_info( drives[i], vendorId, sizeof(vendorId), productId, sizeof(productId));
 
-	DPRINT("Checking drive:  %s %s %s\n", drives[i], vendorId, productId);
+	DPRINT("Checking drive:  %s %s %s", drives[i], vendorId, productId);
 	if( find_in_array( valid_vendors, sizeof(valid_vendors)/sizeof(valid_vendors[0]),vendorId) != -1 
 	    && find_in_array( valid_models, sizeof(valid_models)/sizeof(valid_models[0]), productId) != -1 ) {
+                DPRINT("Valid vendor & model");
 	    if( result == PSLR_OK ) {
-		DPRINT("Found camera %s %s\n", vendorId, productId);
+		DPRINT("Found camera %s %s", vendorId, productId);
+        open_drive(&fd, drives[i]);
 		pslr.fd = fd;
 		if( model != NULL ) {
 		    // user specified the camera model
@@ -287,7 +289,6 @@ pslr_handle_t pslr_init( char *model, char *device ) {
 	    continue;
 	}
     }
-    DPRINT("camera not found\n");
     return NULL;
 }
 
