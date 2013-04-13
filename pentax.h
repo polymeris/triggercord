@@ -43,7 +43,7 @@ public:
     void setExposure(
         float aperture,
         float shutter,
-        int iso = AUTO);
+        int iso = KEEP);
 
     void setMetering(
         int mode,
@@ -64,11 +64,14 @@ public:
         int saturation, int hue,
         int contrast, int sharpness);
 
-    void setFileDestination(std::string path);
+    bool setFileDestination(std::string path);
+    std::string fileDestination();
 
     float aperture();
     float shutter();
     float iso();
+    float maximumAutoIso();
+    float minimumAutoIso();
     float exposureCompensation();
     int focusPoint();
     int meteringMode();
@@ -82,6 +85,8 @@ protected:
 
     void updateStatus();
     void updateExposureMode();
+
+    std::string path;
 };
 
 const Camera * camera();

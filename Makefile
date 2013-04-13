@@ -8,8 +8,8 @@ MAN1DIR = $(MANDIR)/man1
 LIN_CFLAGS = $(CFLAGS)
 LIN_LDFLAGS = $(LDFLAGS)
 
-PY_CFLAGS = $(LIN_CFLAGS) `pkg-config --cflags python2` -I.
-PY_LDFLAGS = $(LIN_LDFLAGS) `pkg-config --libs python2`
+PY_CFLAGS = $(LIN_CFLAGS) `pkg-config --cflags python-2.7` -I.
+PY_LDFLAGS = $(LIN_LDFLAGS) `pkg-config --libs python-2.7`
 
 ANDROID_DIR = android
 ANDROID_SRC = $(ANDROID_DIR)/src/org/pk/

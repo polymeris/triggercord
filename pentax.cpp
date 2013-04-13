@@ -8,8 +8,10 @@ extern "C"
 #include "pentax.h"
 #include <ctime>
 #include <cstdlib>
+#include <pwd.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-#define IS_AUTO(x) ((x) < 0)
 
 static char *theDevice = NULL;
 static time_t theLastUpdateTime = -1;
@@ -27,7 +29,7 @@ bool apertureIsAuto, shutterIsAuto, isoIsAuto;
 
 const std::string & Camera::model()
 {
-    return std::string(pslr_camera_name(theHandle));
+    return pslr_camera_name(theHandle);
 }
 
 void Camera::updateExposureMode()
@@ -83,6 +85,7 @@ Camera::Camera()
 {
     pslr_connect(theHandle);
     updateStatus();
+    path = getpwuid(getuid())->pw_dir;
 }
 
 Camera::~Camera()
@@ -121,7 +124,7 @@ void Camera::setAutofocus(int m, int pt)
 
 void Camera::setAperture(float a)
 {
-    if (IS_AUTO(a))
+    if (a == -1)
     {
 	if (!apertureIsAuto)
 	{
@@ -153,7 +156,7 @@ void Camera::setAperture(float a)
 
 void Camera::setShutter(float s)
 {
-    if (IS_AUTO(s))
+    if (s == -1)
     {
 	if (!shutterIsAuto)
 	{
@@ -185,7 +188,7 @@ void Camera::setShutter(float s)
 
 void Camera::setIso(int i, int min, int max)
 {
-    if (IS_AUTO(i))
+    if (i == -1)
     {
 	if (!isoIsAuto)
 	{
@@ -200,10 +203,16 @@ void Camera::setIso(int i, int min, int max)
 	isoIsAuto = false;
 	updateExposureMode();
     }
-    if (IS_AUTO(min))
+    
+    if (min == -1)
 	min = i;
-    if (IS_AUTO(max))
+    if (max == -1)
 	max = i;
+
+    if (min == -100)
+	min = minimumAutoIso();
+    if (max == -100)
+	max = maximumAutoIso();
     pslr_set_iso(theHandle, i, min, max);
 }
 
@@ -230,9 +239,22 @@ void Camera::setRaw(bool enabled)
 	pslr_set_image_format(theHandle, PSLR_IMAGE_FORMAT_JPEG);
 }
 
-void Camera::setFileDestination(std::string path)
+bool Camera::setFileDestination(std::string path)
 {
-}    
+    if (access(path.c_str(), F_OK) != 0)
+	return false;
+    struct stat status;
+    stat(path.c_str(), &status);
+    if (!S_ISDIR(status.st_mode))
+	return false;
+    this->path = path;
+    return true;
+}
+
+std::string Camera::fileDestination()
+{
+    return path;
+}
 
 void Camera::setJpegAdjustments(int sat, int hue, int con, int sha)
 {
