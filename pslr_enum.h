@@ -1,6 +1,6 @@
 /*
     pkTriggerCord
-    Copyright (C) 2011-2012 Andras Salamon <andras.salamon@melda.info>
+    Copyright (C) 2011-2013 Andras Salamon <andras.salamon@melda.info>
     Remote control of Pentax DSLR cameras.
 
     based on:
@@ -82,6 +82,7 @@ typedef enum {
 } pslr_af_point_sel_t;
 
 typedef enum {
+    PSLR_JPEG_IMAGE_TONE_NONE = -1,  
     PSLR_JPEG_IMAGE_TONE_NATURAL,
     PSLR_JPEG_IMAGE_TONE_BRIGHT,
     PSLR_JPEG_IMAGE_TONE_PORTRAIT,
@@ -118,6 +119,12 @@ typedef enum {
     PSLR_CUSTOM_EV_STEPS_MAX
 } pslr_custom_ev_steps_t;
 
+typedef enum {
+    PSLR_RAW_FORMAT_PEF,
+    PSLR_RAW_FORMAT_DNG,
+    PSLR_RAW_FORMAT_MAX
+} pslr_raw_format_t;
+
 int str_comparison_i (const char *s1, const char *s2, int n);
 int find_in_array( const char** array, int length, char* str );
 
@@ -147,6 +154,8 @@ const char *get_pslr_white_balance_mode_str( pslr_white_balance_mode_t value );
 
 //pslr_custom_ev_steps_t get_pslr_custom_ev_steps( char *str );
 const char *get_pslr_custom_ev_steps_str( pslr_custom_ev_steps_t value );
+
+const char *get_pslr_raw_format_str( pslr_raw_format_t value );
 
 
 #endif

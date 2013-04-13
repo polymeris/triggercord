@@ -1,21 +1,32 @@
 %define name      pktriggercord	
-%define ver       0.79.01
+%define ver       0.80.01
 %define rel       1
 %define prefix    /usr
 %define debug_package %{nil}
+
+%ifarch x86_64
+%define _arch x86_64
+%endif
+ 
+%ifarch i386
+%define _arch i386
+%endif
+
+%ifarch i686
+%define _arch i686
+%endif
 
 Summary: Remote control program for Pentax DSLR cameras.
 Name: pktriggercord
 Version: %ver
 Release: %rel
-Copyright: GPL
+License: GPL
 Group: Applications/Tools
 Source: http://sourceforge.net/projects/pktriggercord/files/%ver/pkTriggerCord-%ver.src.tar.gz
 URL: http://pktriggercord.sourceforge.net
 Packager: Andras Salamon <andras.salamon@melda.info>
 BuildRoot: /var/tmp/%{name}-root
-BuildArch: i386
-BuildRequires: libglade2-devel
+BuildArch: %{_arch}
 BuildRequires: gtk2-devel
 
 %description
@@ -44,6 +55,10 @@ rm -rf $RPM_BUILD_ROOT
 %prefix/../etc/*
 
 %changelog
+* Thu Apr 04 2013 Andras Salamon <andras.salamon@melda.info>
+- built from pkTriggerCord 0.80.00
+* Sat Jan 12 2013 Andras Salamon <andras.salamon@melda.info>
+- built from pkTriggerCord 0.79.02
 * Wed Oct 03 2012 Andras Salamon <andras.salamon@melda.info>
 - built from pkTriggerCord 0.79.00
 * Sun Jul 29 2012 Andras Salamon <andras.salamon@melda.info>

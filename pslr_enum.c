@@ -1,10 +1,12 @@
 /*
     pkTriggerCord
-    Copyright (C) 2011-2012 Andras Salamon <andras.salamon@melda.info>
+    Copyright (C) 2011-2013 Andras Salamon <andras.salamon@melda.info>
     Remote control of Pentax DSLR cameras.
 
     Support for K200D added by Jens Dreyer <jens.dreyer@udo.edu> 04/2011
     Support for K-r added by Vincenc Podobnik <vincenc.podobnik@gmail.com> 06/2011
+    Support for K-30 added by Camilo Polymeris <cpolymeris@gmail.com> 09/2012
+    Support for K-01 added by Ethan Queen <ethanqueen@gmail.com> 01/2013
 
     based on:
 
@@ -119,6 +121,11 @@ const char* pslr_custom_ev_steps_str[PSLR_CUSTOM_EV_STEPS_MAX] = {
     "1/3"
 };
 
+const char* pslr_raw_format_str[PSLR_RAW_FORMAT_MAX] = {
+    "PEF",
+    "DNG"
+};
+
 // case insenstive comparison
 // strnicmp
 int str_comparison_i (const char *s1, const char *s2, int n) {
@@ -143,10 +150,12 @@ int str_comparison_i (const char *s1, const char *s2, int n) {
 int find_in_array( const char** array, int length, char* str ) {
     int i;
     int found_index=-1;
-    int found_index_length=0;
+    size_t found_index_length=0;
+    size_t string_length;
     for( i = 0; i<length; ++i ) {
-	if( (str_comparison_i( array[i], str, strlen(array[i]) ) == 0) && (strlen(array[i]) > found_index_length) ) {
-	    found_index_length = strlen( array[i] );
+        string_length = strlen(array[i]);
+	if( (str_comparison_i( array[i], str, string_length ) == 0) && (string_length > found_index_length) ) {
+	    found_index_length = string_length;
 	    found_index = i;
 	}
     }
@@ -219,4 +228,8 @@ const char *get_pslr_white_balance_mode_str( pslr_white_balance_mode_t value ) {
 
 const char *get_pslr_custom_ev_steps_str( pslr_custom_ev_steps_t value ) {
     return pslr_custom_ev_steps_str[value];
+}
+
+const char *get_pslr_raw_format_str( pslr_raw_format_t value ) {
+    return pslr_raw_format_str[value];
 }

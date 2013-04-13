@@ -1,6 +1,6 @@
 /*
     pkTriggerCord
-    Copyright (C) 2011-2012 Andras Salamon <andras.salamon@melda.info>
+    Copyright (C) 2011-2013 Andras Salamon <andras.salamon@melda.info>
     Remote control of Pentax DSLR cameras.
 
     based on:
@@ -55,11 +55,9 @@ int scsi_write(int sg_fd, uint8_t *cmd, uint32_t cmdLen,
 
 char **get_drives(int *driveNum);
 
-pslr_result get_drive_info(char* driveName, 
+pslr_result get_drive_info(char* driveName, int* hDevice, 
                             char* vendorId, int vendorIdSizeMax,
                             char* productId, int productIdSizeMax);
-
-pslr_result open_drive(int* hDevice, char * driveName);
 
 void close_drive(int *hDevice);
 #endif

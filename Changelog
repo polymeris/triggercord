@@ -1,7 +1,29 @@
-version 0.79.01
+version 0.80.01
+	Support for K-5 II / K-5 IIs ( thx Thomas Lehmann for testing )
+	K10D/K20D: Exposure mode reading bugfix
+
+version 0.80.00 ( 2013-04-04 )
+	code cleanup ( Ethan Queen )
+	Support for K-01 added by Ethan Queen <ethanqueen@gmail.com>
+	Bulb mode in GUI version
+	Merged save settings into Settings window
+	Merged preview icons into Main window
+	Eliminated Buffer Window
+	Require at least gtk+ 2.16
+	Eliminating libglade ( using GtkBuilder instead )
+	Human readable raw format
+	Attempt to fix *istD bug
+
+version 0.79.02 ( 2013-01-12 )
 	--reconnect
 	Fix K-5 zoom reading bug
 	Adding command line html file to windows zip
+	Rpm creation 64bit bugfix
+	Updating lens info database ( exiftool 8.770 )
+	--timeout
+	mingw32 ( Windows cross-compiler update )
+	Limited support bugfix
+	Adding limited support for K100D Super
 
 version 0.79.00 ( 2012-10-03 )
 	Support for K-30 added by Camilo Polymeris <cpolymeris@gmail.com>
