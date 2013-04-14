@@ -1,7 +1,3 @@
-#include <android/log.h>
-#define DPRINT(...)	\
-    __android_log_print(ANDROID_LOG_DEBUG, "Pentax", __VA_ARGS__)
-
 typedef struct sg_io_hdr
 {
   int interface_id;           /* [i] 'S' for SCSI generic (required) */

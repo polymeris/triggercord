@@ -18,7 +18,8 @@
     <string name="meteringMode">Metering Mode</string>
     <string name="raw">RAW</string>
     <string name="rawplus">RAW+</string>
-    <string name="jpegOnly">JPEG Only</string>
+    <string name="rawOnly">RAW only</string>
+    <string name="jpegOnly">JPEG only</string>
     <string name="buffer">Buffer</string>
     <string name="quality">Quality</string>
 </resources>

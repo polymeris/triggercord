@@ -1,5 +1,7 @@
 package org.pk;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import android.app.Activity;
 import android.os.Bundle;
 import android.graphics.*;
@@ -10,19 +12,22 @@ import android.widget.AdapterView.OnItemSelectedListener;
 public class Triggercord extends Activity implements OnItemSelectedListener
 {
     private static final String TAG = "Triggercord";
+
+    private Timer update;
+    
     protected Camera camera;
     protected TextView mode, status;
     protected Spinner iso, aperture, shutter, ec;
     protected ImageView photo;
     protected Button trigger, focus;
-    /** Called when the activity is first created. */
     
+    @Override
     public void onCreate(Bundle savedInstanceState)
     {
     	super.onCreate(savedInstanceState);
     	requestWindowFeature(Window.FEATURE_NO_TITLE);
     	setContentView(R.layout.triggercord);
-        camera = pentax.camera();
+        
         mode =      (TextView)findViewById(R.id.ModeText);
         iso =       (Spinner)findViewById(R.id.IsoSpinner);
         aperture =  (Spinner)findViewById(R.id.ApertureSpinner);
@@ -31,6 +36,15 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         photo =     (ImageView)findViewById(R.id.PhotoView);
         status =    (TextView)findViewById(R.id.StatusText);
         trigger =   (Button)findViewById(R.id.TriggerButton);
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        
+        if (camera == null)
+            camera = pentax.camera();
             
         if (camera == null)
         {
@@ -42,7 +56,6 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         {
             status.setText("Found camera: ");
             status.append(camera.model());
-            trigger.setEnabled(true);
         }
 
         ArrayAdapter<CharSequence> isoAdapter =
@@ -103,6 +116,29 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         aperture.setOnItemSelectedListener(this);
         shutter.setOnItemSelectedListener(this);
         ec.setOnItemSelectedListener(this);
+
+        TimerTask updateTask = new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                runOnUiThread(new Runnable() { public void run() { updateStatus(); } });
+            }
+        };
+        update = new Timer();
+        update.schedule(updateTask, 0, 1000);
+    }
+
+    @Override
+    public void onPause()
+    {
+        super.onPause();
+        if (update != null)
+            update.cancel();
+    }
+
+    public void updateStatus()
+    {
     }
 
     public void shoot(View view)
@@ -187,7 +223,14 @@ public class Triggercord extends Activity implements OnItemSelectedListener
 
     static
     {
-        System.loadLibrary("stlport_shared");
+        try
+        {
+            System.loadLibrary("stlport_shared");
+        }
+        catch (UnsatisfiedLinkError err)
+        {
+            System.loadLibrary("stlport");
+        }
         System.loadLibrary("pentax");
     }
 }

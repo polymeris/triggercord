@@ -1,6 +1,6 @@
 /*
     pkTriggerCord
-    Copyright (C) 2011-2013 Andras Salamon <andras.salamon@melda.info>
+    Copyright (C) 2011-2012 Andras Salamon <andras.salamon@melda.info>
     Remote control of Pentax DSLR cameras.
 
     based on:
@@ -34,7 +34,13 @@
 extern bool debug;
 extern void write_debug( const char* message, ... );
 
-#define DPRINT(x...) write_debug(x)
+#ifndef ANDROID
+    #define DPRINT(x...) write_debug(x)
+#else
+    #include <android/log.h>
+    #define DPRINT(...)	\
+        __android_log_print(ANDROID_LOG_DEBUG, "Pentax", __VA_ARGS__)
+#endif
 
 typedef enum {
     PSLR_OK = 0,
@@ -55,9 +61,11 @@ int scsi_write(int sg_fd, uint8_t *cmd, uint32_t cmdLen,
 
 char **get_drives(int *driveNum);
 
-pslr_result get_drive_info(char* driveName, int* hDevice, 
+pslr_result get_drive_info(char* driveName, 
                             char* vendorId, int vendorIdSizeMax,
                             char* productId, int productIdSizeMax);
+
+pslr_result open_drive(int* hDevice, char * driveName);
 
 void close_drive(int *hDevice);
 #endif

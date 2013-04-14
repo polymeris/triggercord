@@ -1,6 +1,6 @@
 /*
     pkTriggerCord
-    Copyright (C) 2011-2013 Andras Salamon <andras.salamon@melda.info>
+    Copyright (C) 2011-2012 Andras Salamon <andras.salamon@melda.info>
     Remote control of Pentax DSLR cameras.
 
     based on:
@@ -27,15 +27,16 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
-#ifndef ANDROID
-    #include <scsi/sg.h>
-#else
-    #include "android_utils.h"
-#endif
 #include <unistd.h>
 #include <dirent.h>
 
 #include "pslr_scsi.h"
+
+#ifndef ANDROID
+    #include <scsi/sg.h>
+#else
+    #include "scsi_android.h"
+#endif /* ANDROID */
 
 void print_scsi_error(sg_io_hdr_t *pIo, uint8_t *sense_buffer) {
     int k;
@@ -91,8 +92,7 @@ char **get_drives(int *driveNum) {
     return ret;
 }
 
-pslr_result get_drive_info(char* driveName, int* hDevice, 
-                            char* vendorId, int vendorIdSizeMax,
+pslr_result get_drive_info(char* driveName, char* vendorId, int vendorIdSizeMax,
 			   char* productId, int productIdSizeMax) {
     char nmbuf[256];
     int fd;
@@ -124,11 +124,24 @@ pslr_result get_drive_info(char* driveName, int* hDevice,
     int p_length = read(fd, productId, productIdSizeMax-1);
     productId[p_length]='\0';
     close(fd);
+    return PSLR_OK;
+}
 
+pslr_result open_drive(int* hDevice, char * driveName)
+{
+    char nmbuf[256];
+    char sudocmd[256];
     snprintf(nmbuf, sizeof (nmbuf), "/dev/%s", driveName);
+    
     *hDevice = open(nmbuf, O_RDWR);
     if( *hDevice == -1) {
-	return PSLR_DEVICE_ERROR;
+        snprintf(sudocmd, sizeof (sudocmd), "su -c \"chmod 666 %s\"", nmbuf);
+        DPRINT("Need root! Executing %s", sudocmd);
+        system(&sudocmd);
+        *hDevice = open(nmbuf, O_RDWR);
+
+        if( *hDevice == -1)
+            return PSLR_DEVICE_ERROR;
     }
     return PSLR_OK;
 }
