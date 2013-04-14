@@ -78,6 +78,15 @@ install:
 clean:
 	rm -f pktriggercord pktriggercord-cli *.o
 	rm -f pktriggercord.exe pktriggercord-cli.exe
+	rm -rf python
+	rm -rf $(ANDROID_DIR)/bin
+	rm -rf $(ANDROID_DIR)/gen
+	rm -rf $(ANDROID_DIR)/libs
+	rm -rf $(ANDROID_DIR)/obj
+	rm -f $(ANDROID_DIR)/jni/pentax_wrap.cpp
+	rm -f $(ANDROID_SRC)/Camera.java
+	rm -f $(ANDROID_SRC)/pentax*.java
+	rm -f $(ANDROID_ANT_FILE)
 
 uninstall:
 	rm -f $(PREFIX)/bin/pktriggercord $(PREFIX)/bin/pktriggercord-cli
