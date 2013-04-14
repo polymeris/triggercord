@@ -30,7 +30,7 @@ void cleanup()
 
 bool apertureIsAuto, shutterIsAuto, isoIsAuto;
 
-const std::string & Camera::model()
+const std::string Camera::model()
 {
     return pslr_camera_name(theHandle);
 }
@@ -186,16 +186,22 @@ void Camera::setShutter(float s)
     s = std::max(s, minimumShutter());
 
     pslr_rational_t rational;
-    if (s < 5)
+    if (s < .3)
     {
-	rational.nom = 10;
-	rational.denom = int(10.0 / s);
+	rational.nom = 1;
+	rational.denom = int(1.0 / s);
+    }
+    else if (s < 2.)
+    {
+	rational.nom = 20;
+	rational.denom = int(20.0 / s);
     }
     else
     {
 	rational.nom = int(s);
 	rational.denom = 1;
     }
+    DPRINT("S: %i/%i", rational.nom, rational.denom);
     pslr_set_shutter(theHandle, rational);
 }
 
@@ -329,7 +335,7 @@ int Camera::focusPoint()
     return theStatus.selected_af_point;
 }
 
-int Camera::meteringMode()
+int Camera::exposureMode()
 {
     updateStatus();
     return theStatus.exposure_mode;
@@ -434,4 +440,26 @@ float Camera::maximumExposureCompensation()
 float Camera::minimumExposureCompensation()
 {
     return -5;
+}
+
+std::string Camera::exposureModeAbbreviation()
+{
+    switch (exposureMode())
+    {
+	case 2:
+	case 3:
+	case PSLR_EXPOSURE_MODE_GREEN:
+	case PSLR_EXPOSURE_MODE_P: return "P";
+	case PSLR_EXPOSURE_MODE_SV: return "Sv";
+	case PSLR_EXPOSURE_MODE_AV_OFFAUTO:
+	case PSLR_EXPOSURE_MODE_AV: return "Av";
+	case PSLR_EXPOSURE_MODE_TV: return "Tv";
+	case PSLR_EXPOSURE_MODE_TAV: return "TAv";
+	case PSLR_EXPOSURE_MODE_M_OFFAUTO:
+	case PSLR_EXPOSURE_MODE_M: return "M";
+	case PSLR_EXPOSURE_MODE_X: return "X";
+	case PSLR_EXPOSURE_MODE_B_OFFAUTO:
+	case PSLR_EXPOSURE_MODE_B: return "B";
+	default: return "?";
+    }
 }

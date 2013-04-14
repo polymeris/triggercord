@@ -40,7 +40,7 @@ public:
 #endif
 public:
     /** Returns the name of the camera model. */
-    const std::string & model();
+    const std::string model();
     
     void focus();
     /** Shoots a single frame.
@@ -123,12 +123,13 @@ public:
     float maximumExposureCompensation();
     float minimumExposureCompensation();
     int focusPoint();
-    int meteringMode();
+    int exposureMode();
     int autofocusMode();
     /** Returns true if RAW mode has been selected.
      * This mode saves the RAW data to a DNG file.
      */
     bool raw();
+    std::string exposureModeAbbreviation();
 
 public:
     ~Camera();

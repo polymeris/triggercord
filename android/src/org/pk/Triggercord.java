@@ -4,6 +4,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Environment;
 import android.graphics.*;
 import android.view.*;
 import android.widget.*;
@@ -49,13 +50,23 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         if (camera == null)
         {
             status.setText("No camera found");
-            status.append(" :( ");
             return;
         }
         else
         {
             status.setText("Found camera: ");
             status.append(camera.model());
+            java.io.File picDir;
+            picDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            picDir.mkdirs();
+            if (!picDir.exists())
+            {
+                picDir = new java.io.File("/sdcard/Pictures");
+                picDir.mkdirs();
+            }
+            if (!picDir.exists())
+                status.setText("Can't access storage.");
+            camera.setFileDestination(picDir.getAbsolutePath());
         }
 
         ArrayAdapter<CharSequence> isoAdapter =
@@ -95,9 +106,9 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         for (int i = 0; i < shutterSecondValues.length; i++)
         {
             if (shutterSecondValues[i] < camera.maximumShutter())
-                shutterAdapter.add(Float.toString(shutterSecondValues[i]) + "\"");
+                shutterAdapter.add(Integer.toString((int)shutterSecondValues[i]) + "\"");
         }
-        shutterAdapter.add(Float.toString(camera.maximumShutter()) + "\"");
+        shutterAdapter.add(Integer.toString((int)camera.maximumShutter()) + "\"");
         shutter.setAdapter(shutterAdapter);
 
         ArrayAdapter<CharSequence> ecAdapter =
@@ -139,6 +150,9 @@ public class Triggercord extends Activity implements OnItemSelectedListener
 
     public void updateStatus()
     {
+        if (camera == null)
+            return;
+        mode.setText(camera.exposureModeAbbreviation());
     }
 
     public void shoot(View view)
@@ -169,7 +183,7 @@ public class Triggercord extends Activity implements OnItemSelectedListener
                     camera.setIso(-1);
                     return;
                 }
-                camera.setIso(Integer.parseInt(str));
+                camera.setIso((int)Float.parseFloat(str));
                 return;
             case R.id.ApertureSpinner:
                 if (str == "AUTO")
@@ -185,9 +199,11 @@ public class Triggercord extends Activity implements OnItemSelectedListener
                     camera.setShutter(-1);
                     return;
                 }
+                status.setText(str);
                 if (str.endsWith("\""))
                 {
-                    camera.setShutter(Float.parseFloat(str.replace("\"", "")));
+                    str = str.replace("\"", "");
+                    camera.setShutter(Float.parseFloat(str));
                     return;
                 }
                 camera.setShutter(1f / Float.parseFloat(str));
