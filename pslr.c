@@ -741,38 +741,8 @@ int pslr_set_exposure_mode(pslr_handle_t h, pslr_exposure_mode_t mode) {
     if (mode < 0 || mode >= PSLR_EXPOSURE_MODE_MAX) {
         return PSLR_PARAM;
     }
-
-    /* Special handling for K-30. Exposure mode values have changed, but we still use the old
-     * ones for compatibility, so we have to translate. */
-    if (p->model->id1 == 0x12f52) { //K-30 id
-        switch (mode)
-        {
-            case PSLR_EXPOSURE_MODE_TV:
-                mode = 3;
-                break;
-            case PSLR_EXPOSURE_MODE_AV:
-            case PSLR_EXPOSURE_MODE_AV_OFFAUTO:
-                mode = 4;
-                break;
-            case PSLR_EXPOSURE_MODE_M:
-            case PSLR_EXPOSURE_MODE_M_OFFAUTO:
-                mode = 6;
-                break;
-            case PSLR_EXPOSURE_MODE_B:
-            case PSLR_EXPOSURE_MODE_B_OFFAUTO:
-                mode = 7;
-                break;
-            case PSLR_EXPOSURE_MODE_TAV:
-                mode = 5;
-                break;
-            case PSLR_EXPOSURE_MODE_SV:
-                mode = 2;
-                break;
-            default:
-                mode = 0;
-        }
-    }
-    
+    if (p->model->id1 == 0x12f52) //K-30 id
+        mode = (pslr_exposure_mode_t)exposure_mode_conversion(mode);
     return ipslr_handle_command_x18( p, true, X18_EXPOSURE_MODE, 2, 1, mode, 0);
 }
 
@@ -1046,8 +1016,9 @@ static int ipslr_status_full(ipslr_handle_t *p, pslr_status *status) {
     } else {
         // everything OK
         (*p->model->parser_function)(p, status);
-        // required for K-x, probably for other cameras too
-        status->exposure_mode = exposure_mode_conversion( status->exposure_mode );
+        // required for K-x, probably for other cameras too (but not for the K-30!)
+        if (p->model->id1 != 0x12f52) // K-30 id
+            status->exposure_mode = exposure_mode_conversion( status->exposure_mode );
         return PSLR_OK;
     }
 }

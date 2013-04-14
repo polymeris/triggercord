@@ -393,32 +393,6 @@ void ipslr_status_parse_k30(ipslr_handle_t *p, pslr_status *status) {
     status->focus = get_int32(&buf[0x1A8]); // ?
     status->lens_id1 = (get_uint32( &buf[0x190])) & 0x0F;
     status->lens_id2 = get_uint32( &buf[0x19C]);
-    /* K-30 changed the values for different exposure modes,
-     * see also the handler in pslr_set_exposure_mode [pslr.c] */
-    switch (get_uint32(&buf[0xb4]))
-    {
-        case 2:
-            status->exposure_mode = 15; // Sv
-            break;
-        case 3:
-            status->exposure_mode = 4; // Tv
-            break;
-        case 4:
-            status->exposure_mode = 5; // Av
-            break;
-        case 5:
-            status->exposure_mode = 13; //TAv
-            break;
-        case 6:
-            status->exposure_mode = 8; // M
-            break;
-        case 7:
-            status->exposure_mode = 9; // B
-            break;
-        default:
-            status->exposure_mode = 0; // P
-            break;
-    }
 }
 
 // status check seems to be the same as K30
