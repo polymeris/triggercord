@@ -106,7 +106,7 @@ void Camera::focus()
     DPRINT("Focused.");
 }
 
-void Camera::shoot()
+std::string Camera::shoot()
 {
     pslr_shutter(theHandle);
     updateStatus();
@@ -115,6 +115,7 @@ void Camera::shoot()
 	usleep(10000);
     deleteBuffer();
     DPRINT("Shot.");
+    return lastFilename;
 }
 
 void Camera::setExposure(float a, float s, int i)
@@ -355,15 +356,12 @@ std::string Camera::getFilename()
     std::stringstream filename;
     do
     {
+	filename.str(std::string());
+	filename.clear();
 	imageNumber++;
 	filename << fileDestination() << "/tc" << imageNumber << "." << fileExtension();
     } while (std::ifstream(filename.str().c_str())); // if it exists, find another name
     return filename.str();
-}
-
-const std::list<std::string> & Camera::imageFiles()
-{
-    return savedFiles;
 }
 
 bool Camera::saveBuffer(const std::string & filename)
@@ -390,7 +388,7 @@ bool Camera::saveBuffer(const std::string & filename)
     } while (bytes);
     output.close();
 
-    savedFiles.push_back(filename);
+    lastFilename = filename;
     return true;
 }
 

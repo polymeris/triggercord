@@ -6,8 +6,7 @@
 
 #ifdef SWIG
     %module pentax
-    %include "std_string.i"
-    #ifdef SWIGJAVA
+     #ifdef SWIGJAVA
         %javaconst(1);
     #endif
     %header %{
@@ -39,7 +38,7 @@ public:
     const std::string & model();
     
     void focus();
-    void shoot();
+    std::string shoot();
     
     void setExposure(
         float aperture,
@@ -70,17 +69,23 @@ public:
     std::string fileExtension();
 
     float aperture();
+    float maximumAperture();
+    float minimumAperture();
     float shutter();
+    float maximumShutter();
+    float minimumShutter();
     float iso();
+    float maximumIso();
+    float minimumIso();
     float maximumAutoIso();
     float minimumAutoIso();
     float exposureCompensation();
+    float maximumExposureCompensation();
+    float minimumExposureCompensation();
     int focusPoint();
     int meteringMode();
     int autofocusMode();
     bool raw();
-
-    const std::list<std::string> & imageFiles();
     
 public:
     ~Camera();
@@ -96,7 +101,7 @@ protected:
     std::string getFilename();
 
     std::string path;
-    std::list<std::string> savedFiles;
+    std::string lastFilename;
     int imageNumber;
 };
 
