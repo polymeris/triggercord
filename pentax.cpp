@@ -435,12 +435,3 @@ float Camera::minimumExposureCompensation()
 {
     return -5;
 }
-
-void Camera::setMode(int mode)
-{
-    pslr_exposure_mode_t m = (pslr_exposure_mode_t)mode;
-    std::cout << "mode: " << m << std::endl;
-    pslr_set_exposure_mode(theHandle, m);
-    updateStatus();
-    std::cout << "real mode: " << theStatus.exposure_mode << std::endl;
-}
