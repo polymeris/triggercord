@@ -27,7 +27,11 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <scsi/sg.h>
+#ifndef ANDROID
+    #include <scsi/sg.h>
+#else
+    #include "android_utils.h"
+#endif
 #include <unistd.h>
 #include <dirent.h>
 

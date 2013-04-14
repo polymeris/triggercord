@@ -6,6 +6,9 @@ extern "C"
 }
 
 #include "pentax.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include <ctime>
 #include <cstdlib>
 #include <pwd.h>
@@ -50,7 +53,8 @@ void Camera::updateExposureMode()
 	m = PSLR_EXPOSURE_MODE_TV;
     else if ( aA &&  aS && !aI)
 	m = PSLR_EXPOSURE_MODE_SV;
-    m = PSLR_EXPOSURE_MODE_P;
+    else
+	m = PSLR_EXPOSURE_MODE_P;
     pslr_set_exposure_mode(theHandle, m);
 }
 
@@ -86,6 +90,7 @@ Camera::Camera()
     pslr_connect(theHandle);
     updateStatus();
     path = getpwuid(getuid())->pw_dir;
+    imageNumber = 0;
 }
 
 Camera::~Camera()
@@ -98,11 +103,18 @@ Camera::~Camera()
 void Camera::focus()
 {
     pslr_focus(theHandle);
+    DPRINT("Focused.");
 }
 
 void Camera::shoot()
 {
     pslr_shutter(theHandle);
+    updateStatus();
+    std::string fn = getFilename();
+    while (!saveBuffer(fn))
+	usleep(10000);
+    deleteBuffer();
+    DPRINT("Shot.");
 }
 
 void Camera::setExposure(float a, float s, int i)
@@ -234,7 +246,7 @@ void Camera::setAutofocusPoint(int pt)
 void Camera::setRaw(bool enabled)
 {
     if (enabled)
-	pslr_set_image_format(theHandle, PSLR_IMAGE_FORMAT_RAW_PLUS);
+	pslr_set_image_format(theHandle, PSLR_IMAGE_FORMAT_RAW);
     else
 	pslr_set_image_format(theHandle, PSLR_IMAGE_FORMAT_JPEG);
 }
@@ -254,6 +266,19 @@ bool Camera::setFileDestination(std::string path)
 std::string Camera::fileDestination()
 {
     return path;
+}
+
+std::string Camera::fileExtension()
+{
+    if (raw())
+	return "dng";
+    return "jpg";
+}
+
+bool Camera::raw()
+{
+    updateStatus();
+    return theStatus.image_format != PSLR_IMAGE_FORMAT_JPEG;
 }
 
 void Camera::setJpegAdjustments(int sat, int hue, int con, int sha)
@@ -313,4 +338,63 @@ int Camera::autofocusMode()
 {
     updateStatus();
     return theStatus.af_mode;
+}
+
+float Camera::minimumAutoIso()
+{
+    return theStatus.auto_iso_min;
+}
+
+float Camera::maximumAutoIso()
+{
+    return theStatus.auto_iso_max;
+}
+
+std::string Camera::getFilename()
+{
+    std::stringstream filename;
+    do
+    {
+	imageNumber++;
+	filename << fileDestination() << "/tc" << imageNumber << "." << fileExtension();
+    } while (std::ifstream(filename.str().c_str())); // if it exists, find another name
+    return filename.str();
+}
+
+const std::list<std::string> & Camera::imageFiles()
+{
+    return savedFiles;
+}
+
+bool Camera::saveBuffer(const std::string & filename)
+{
+    std::ofstream output;
+    unsigned char buf[65536];
+    int bytes;
+    DPRINT("Writing to %s.", filename.c_str());
+    if (pslr_buffer_open(
+	theHandle, 0,
+	raw() ? PSLR_BUF_DNG : pslr_get_jpeg_buffer_type(theHandle, theStatus.jpeg_quality),
+	theStatus.jpeg_resolution)
+	    != PSLR_OK)
+    {
+	DPRINT("Failed to open camera buffer.");
+	return false;
+    }
+    output.open(filename.c_str());
+    
+    DPRINT("Buffer length: %d.", pslr_buffer_get_size(theHandle));
+    do {
+        bytes = pslr_buffer_read(theHandle, buf, sizeof (buf));
+        output.write((char *)buf, bytes);
+    } while (bytes);
+    output.close();
+
+    savedFiles.push_back(filename);
+    return true;
+}
+
+void Camera::deleteBuffer()
+{
+    pslr_delete_buffer(theHandle, 0);
 }

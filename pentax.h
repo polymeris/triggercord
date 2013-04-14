@@ -2,6 +2,7 @@
 #define PENTAX_HH
 
 #include <string>
+#include <list>
 
 #ifdef SWIG
     %module pentax
@@ -66,6 +67,7 @@ public:
 
     bool setFileDestination(std::string path);
     std::string fileDestination();
+    std::string fileExtension();
 
     float aperture();
     float shutter();
@@ -76,6 +78,9 @@ public:
     int focusPoint();
     int meteringMode();
     int autofocusMode();
+    bool raw();
+
+    const std::list<std::string> & imageFiles();
     
 public:
     ~Camera();
@@ -86,7 +91,13 @@ protected:
     void updateStatus();
     void updateExposureMode();
 
+    bool saveBuffer(const std::string &);
+    void deleteBuffer();
+    std::string getFilename();
+
     std::string path;
+    std::list<std::string> savedFiles;
+    int imageNumber;
 };
 
 const Camera * camera();
