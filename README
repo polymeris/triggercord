@@ -23,7 +23,7 @@ Feature Roadmap
 Implemented:
 
 	* ioctl based scsi interface
-	* K-30 support
+	* K-30 support (albeit buggy)
 
 ### High-level API
 
@@ -31,16 +31,16 @@ Implemented:
 
 	* Focusing and shooting
 	* Setting exposure parameters
+	* Saving buffers
+	* Setting metering mode
+	* Setting output destinaton
+	* Setting output file format
+	* Reading parameters
 	
 Planned:
 
-	* Saving buffers
-	* Setting metering mode
 	* Setting autofocus mode
 	* Setting drive mode
-	* Setting output file format
-	* Setting output destinaton
-	* Reading parameters
 	
 Suggested:
 
