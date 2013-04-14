@@ -61,14 +61,14 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         ArrayAdapter<CharSequence> isoAdapter =
             new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item);
         isoAdapter.add("AUTO");
-        isoAdapter.add(Float.toString(camera.minimumIso()));
+        isoAdapter.add(Integer.toString((int)camera.minimumIso()));
         for (int i = 0; i < isoValues.length; i++)
         {
             if (isoValues[i] > camera.minimumIso() &&
                 isoValues[i] < camera.maximumIso())
-                isoAdapter.add(Float.toString(isoValues[i]));
+                isoAdapter.add(Integer.toString((int)isoValues[i]));
         }
-        isoAdapter.add(Float.toString(camera.maximumIso()));
+        isoAdapter.add(Integer.toString((int)camera.maximumIso()));
         iso.setAdapter(isoAdapter);
         
         ArrayAdapter<CharSequence> apertureAdapter =
@@ -89,7 +89,7 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         shutterAdapter.add("AUTO");
         for (int i = 0; i < shutterOneOverValues.length; i++)
         {
-            if ((1f / shutterOneOverValues[i]) >= camera.minimumAperture())
+            if ((1f / shutterOneOverValues[i]) >= camera.minimumShutter())
                 shutterAdapter.add(Float.toString(shutterOneOverValues[i]));
         }
         for (int i = 0; i < shutterSecondValues.length; i++)
@@ -105,8 +105,8 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         ecAdapter.add(Float.toString(camera.minimumExposureCompensation()));
         for (int i = 0; i < ecValues.length; i++)
         {
-            if (apertureValues[i] > camera.minimumExposureCompensation() &&
-                apertureValues[i] < camera.maximumExposureCompensation())
+            if (ecValues[i] > camera.minimumExposureCompensation() &&
+                ecValues[i] < camera.maximumExposureCompensation())
                 ecAdapter.add(Float.toString(ecValues[i]));
         }
         ecAdapter.add(Float.toString(camera.maximumExposureCompensation()));
@@ -182,7 +182,7 @@ public class Triggercord extends Activity implements OnItemSelectedListener
             case R.id.ShutterSpinner:
                 if (str == "AUTO")
                 {
-                    camera.setAperture(-1);
+                    camera.setShutter(-1);
                     return;
                 }
                 if (str.endsWith("\""))
