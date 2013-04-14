@@ -6,7 +6,8 @@
 
 #ifdef SWIG
     %module pentax
-     #ifdef SWIGJAVA
+    %include "std_string.i"
+    #ifdef SWIGJAVA
         %javaconst(1);
     #endif
     %header %{
