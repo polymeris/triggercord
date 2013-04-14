@@ -37,7 +37,6 @@ const std::string & Camera::model()
 
 pslr_exposure_mode_t getExposureMode(bool aA, bool aS, bool aI)
 {
-    std::cout << "A:" << aA << " S:" << aS << " I:" << aI << std::endl;
     if  ((!aA) && (!aS) && (!aI))
 	return PSLR_EXPOSURE_MODE_M;
     if ((!aA) && (!aS))
@@ -55,10 +54,8 @@ void Camera::updateExposureMode()
 {
     updateStatus();
     pslr_exposure_mode_t m = getExposureMode(apertureIsAuto, shutterIsAuto, isoIsAuto);
-    std::cout << "mode: " << m << std::endl;
     pslr_set_exposure_mode(theHandle, m);
     updateStatus();
-    std::cout << "real mode: " << theStatus.exposure_mode << std::endl;
 }
 
 void Camera::updateStatus()
@@ -140,7 +137,7 @@ void Camera::setAutofocus(int m, int pt)
 
 void Camera::setAperture(float a)
 {
-    if (a == -1)
+    if (a < 0)
     {
 	if (!apertureIsAuto)
 	{
@@ -152,6 +149,9 @@ void Camera::setAperture(float a)
 
     apertureIsAuto = false;
     updateExposureMode();
+
+    a = std::min(a, maximumAperture());
+    a = std::max(a, minimumAperture());
 
     pslr_rational_t rational;
     if (a >= 11.0)
@@ -169,7 +169,7 @@ void Camera::setAperture(float a)
 
 void Camera::setShutter(float s)
 {
-    if (s == -1)
+    if (s < 0)
     {
 	if (!shutterIsAuto)
 	{
@@ -181,6 +181,9 @@ void Camera::setShutter(float s)
 
     shutterIsAuto = false;
     updateExposureMode();
+
+    s = std::min(s, maximumShutter());
+    s = std::max(s, minimumShutter());
 
     pslr_rational_t rational;
     if (s < 5)
@@ -210,6 +213,9 @@ void Camera::setIso(int i, int min, int max)
 
     isoIsAuto = false;
     updateExposureMode();
+
+    i = std::min(i, (int)maximumIso());
+    i = std::max(i, (int)minimumIso());
     
     if (min == -1)
 	min = i;
