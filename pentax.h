@@ -75,10 +75,10 @@ public:
     float maximumShutter();
     float minimumShutter();
     float iso();
-    float maximumIso();
-    float minimumIso();
     float maximumAutoIso();
     float minimumAutoIso();
+    float maximumIso();
+    float minimumIso();
     float exposureCompensation();
     float maximumExposureCompensation();
     float minimumExposureCompensation();
@@ -86,6 +86,8 @@ public:
     int meteringMode();
     int autofocusMode();
     bool raw();
+
+    void setMode(int mode);
     
 public:
     ~Camera();

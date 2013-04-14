@@ -35,27 +35,30 @@ const std::string & Camera::model()
     return pslr_camera_name(theHandle);
 }
 
+pslr_exposure_mode_t getExposureMode(bool aA, bool aS, bool aI)
+{
+    std::cout << "A:" << aA << " S:" << aS << " I:" << aI << std::endl;
+    if  ((!aA) && (!aS) && (!aI))
+	return PSLR_EXPOSURE_MODE_M;
+    if ((!aA) && (!aS))
+	return PSLR_EXPOSURE_MODE_TAV;
+    if ((!aA))
+	return PSLR_EXPOSURE_MODE_AV;
+    if (( aA) && (!aS))
+	return PSLR_EXPOSURE_MODE_TV;
+    if (( aA) && ( aS) && (!aI))
+	return PSLR_EXPOSURE_MODE_SV;
+    return PSLR_EXPOSURE_MODE_P;
+}
+
 void Camera::updateExposureMode()
 {
-    bool aA = apertureIsAuto;
-    bool aS = shutterIsAuto;
-    bool aI = isoIsAuto;
-    pslr_exposure_mode_t m;
     updateStatus();
-
-    if      (!aA && !aS && !aI)
-	m = PSLR_EXPOSURE_MODE_M;
-    else if (!aA && !aS)
-	m = PSLR_EXPOSURE_MODE_TAV;
-    else if (!aA)
-	m = PSLR_EXPOSURE_MODE_AV;
-    else if ( aA && !aS)
-	m = PSLR_EXPOSURE_MODE_TV;
-    else if ( aA &&  aS && !aI)
-	m = PSLR_EXPOSURE_MODE_SV;
-    else
-	m = PSLR_EXPOSURE_MODE_P;
+    pslr_exposure_mode_t m = getExposureMode(apertureIsAuto, shutterIsAuto, isoIsAuto);
+    std::cout << "mode: " << m << std::endl;
     pslr_set_exposure_mode(theHandle, m);
+    updateStatus();
+    std::cout << "real mode: " << theStatus.exposure_mode << std::endl;
 }
 
 void Camera::updateStatus()
@@ -147,11 +150,8 @@ void Camera::setAperture(float a)
 	return;
     }
 
-    if (apertureIsAuto)
-    {
-	apertureIsAuto = false;
-	updateExposureMode();
-    }
+    apertureIsAuto = false;
+    updateExposureMode();
 
     pslr_rational_t rational;
     if (a >= 11.0)
@@ -179,11 +179,8 @@ void Camera::setShutter(float s)
 	return;
     }
 
-    if (shutterIsAuto)
-    {
-	shutterIsAuto = true;
-	updateExposureMode();
-    }
+    shutterIsAuto = false;
+    updateExposureMode();
 
     pslr_rational_t rational;
     if (s < 5)
@@ -211,11 +208,8 @@ void Camera::setIso(int i, int min, int max)
 	return;
     }
 
-    if (isoIsAuto)
-    {
-	isoIsAuto = false;
-	updateExposureMode();
-    }
+    isoIsAuto = false;
+    updateExposureMode();
     
     if (min == -1)
 	min = i;
@@ -395,4 +389,52 @@ bool Camera::saveBuffer(const std::string & filename)
 void Camera::deleteBuffer()
 {
     pslr_delete_buffer(theHandle, 0);
+}
+
+float Camera::maximumAperture()
+{
+    return rationalAsFloat(theStatus.lens_max_aperture);
+}
+
+float Camera::minimumAperture()
+{
+    return rationalAsFloat(theStatus.lens_min_aperture);
+}
+
+float Camera::maximumShutter()
+{
+    return 30.0;
+}
+
+float Camera::minimumShutter()
+{
+    return 1.0 / pslr_get_model_fastest_shutter_speed(theHandle);
+}
+
+float Camera::maximumIso()
+{
+    return pslr_get_model_extended_iso_max(theHandle);
+}
+float Camera::minimumIso()
+{
+    return pslr_get_model_extended_iso_min(theHandle);
+}
+
+float Camera::maximumExposureCompensation()
+{
+    return 5;
+}
+
+float Camera::minimumExposureCompensation()
+{
+    return -5;
+}
+
+void Camera::setMode(int mode)
+{
+    pslr_exposure_mode_t m = (pslr_exposure_mode_t)mode;
+    std::cout << "mode: " << m << std::endl;
+    pslr_set_exposure_mode(theHandle, m);
+    updateStatus();
+    std::cout << "real mode: " << theStatus.exposure_mode << std::endl;
 }
