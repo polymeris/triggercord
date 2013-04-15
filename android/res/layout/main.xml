@@ -32,6 +32,7 @@
 
         <Spinner
             android:id="@+id/IsoSpinner"
+            android:tag="ISO"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical|fill_horizontal"
@@ -48,6 +49,7 @@
 
         <Spinner
             android:id="@+id/ApertureSpinner"
+            android:tag="Aperture"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical|fill_horizontal"
@@ -64,6 +66,7 @@
 
         <Spinner
             android:id="@+id/ShutterSpinner"
+            android:tag="Shutterspeed"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical|fill_horizontal"
@@ -80,6 +83,7 @@
 
         <Spinner
             android:id="@+id/ECSpinner"
+            android:tag="Exposure Compensation"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical|fill_horizontal"
@@ -112,21 +116,21 @@
 
         <Button
             android:id="@+id/TriggerButton"
+            android:tag="Shoot"
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
-            android:onClick="shoot"
             android:text="@string/shoot" />
 
         <Button
             android:id="@+id/FocusButton"
+            android:tag="Focus"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_alignParentBottom ="true"
             android:layout_toLeftOf="@+id/TriggerButton"
             android:text="@string/focus"
-            android:onClick="focus"
         />
     </RelativeLayout>
 </LinearLayout>
