@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <map>
 
 #ifdef SWIG
     %module pentax
@@ -24,129 +25,81 @@
     #define KEEP     (-100)
 #endif
 
+class Stop
+{
+public:
+    Stop(int stops = 1);
+    static Stop fromHalfStops(int);
+    static Stop fromThirdStops(int);
+
+    static Stop fromAperture(float);
+    static Stop fromShutterspeed(float);
+    static Stop fromShuttertime(float);
+    static Stop fromISO(int);
+    static Stop fromExposureCompensation(float);
+
+    Stop & operator+=(const Stop &);
+    Stop & operator-=(const Stop &);
+
+    const Stop operator+(const Stop &) const;
+    const Stop operator-(const Stop &) const;
+    const Stop operator*(int) const;
+
+    const Stop plus(const Stop &) const;
+    const Stop minus(const Stop &) const;
+    const Stop times(int) const;
+
+    float asAperture() const;
+    float asShutterspeed() const;
+    float asShuttertime() const;
+    int asISO() const;
+    float asExposureCompensation() const;
+
+public:
+    static const Stop UNKNOWN;
+    static const Stop AUTO;
+    static const Stop HALF;
+    static const Stop THIRD;
+protected:
+    static Stop fromSixthStops(int);
+    int sixthStops;
+};
+
 /** Singleton class representing the camera connected.
  * Get the only instance of this class calling the camera() method.
  */
 class Camera
 {
-#ifndef SWIGJAVA
 public:
-    static const int AUTO       = -1;
-    static const int SINGLE     = -2;
-    static const int CONTINUOUS = -3;
-    static const int CENTER     = -4;
-    static const int SPOT       = -5;
-    static const int KEEP     = -100;
-#endif
+    typedef std::string Parameter;
+    typedef std::string String;
 public:
-    /** Returns the name of the camera model. */
-    const std::string model();
+    void set(const Parameter &, const Stop &);
+    void set(const Parameter &, const String &);
+    Stop stop(const Parameter &) const;
+    String string(const Parameter &) const;
+    int minimum(const Parameter &) const;
+    int maximum(const Parameter &) const;
+    String accepptedString(const Parameter &, int);
+
+protected:
+    std::map<Parameter, Stop> requestedStopChanges;
+    std::map<Parameter, String> requestedStringChanges;
+    std::map<Parameter, Stop> currentStopValues;
+    std::map<Parameter, String> currentStringValues;
+    void applyChanges();
+    void updateValues();
     
-    void focus();
-    /** Shoots a single frame.
-     * Returns the filename this shot was saved to.
-     */
-    std::string shoot();
-
-    /** Sets two or three exposure parameters at the same time. */
-    void setExposure(
-        float aperture,
-        float shutter,
-        int iso = KEEP);
-
-    void setMetering(
-        int mode,
-        float compensation = 0.0);
-
-    void setAutofocus(
-        int mode,
-        int point = CENTER);
-
-    /** Set the aperture.
-     * In N numbers.
-     */
-    void setAperture(float aperture);
-    /** Set the shutterspeed (exposure time).
-     * In seconds.
-     */
-    void setShutter(float shutter);
-    /** Sets ISO sensitivity, and an optional Auto ISO range. */
-    void setIso(int iso, int min = KEEP, int max = KEEP);
-    /** Sets exposure compensation value, in stops. */
-    void setExposureCompensation(float ec);
-    void setAutofocusPoint(int point);
-
-    /** Enable or disable RAW
-     * Currently only DNG is supported, and if RAW is enabled JPEG files will not be saved.
-     * That is, RAW+ is not available.
-     */
-    void setRaw(bool enabled);
-    void setJpegAdjustments(
-        int saturation, int hue,
-        int contrast, int sharpness);
-
-    /** Set destination path for image files.
-     * The directory must already exist. Returns false on failure.
-     */
-    bool setFileDestination(std::string path);
-    std::string fileDestination();
-    /** Returns the file extension used.
-     * Whitout the dot.
-     */
-    std::string fileExtension();
-
-    /** Returns current aperture in N. */
-    float aperture();
-    /** Returns maximum aperture number (smallest physical aperture) of the mounted lens. */
-    float maximumAperture();
-    /** Returns minimum aperture number (largest physical aperture) of the mounted lens. */
-    float minimumAperture();
-    /** Returns current shutterspeed in seconds. */
-    float shutter();
-    /** Returns slowest shutterspeed (maximum time) in seconds.
-     * Does not consider bulb mode. */
-    float maximumShutter();
-    /** Returns fastest shutterspeed (minimum time) in seconds. */
-    float minimumShutter();
-    /** Returns current ISO sensitivity. */
-    float iso();
-    /** Returns upper sensitivity bound of automatic ISO range. */
-    float maximumAutoIso();
-    /** Returns lower sensitivity bound of automatic ISO range. */
-    float minimumAutoIso();
-    /** Returns highest sensitivity the connected camera supports. */
-    float maximumIso();
-    /** Returns lowest sensitivity the connected camera supports. */
-    float minimumIso();
-    /** Returns current exposure compensation (EC) setting in stops. */
-    float exposureCompensation();
-    float maximumExposureCompensation();
-    float minimumExposureCompensation();
-    int focusPoint();
-    int exposureMode();
-    int autofocusMode();
-    /** Returns true if RAW mode has been selected.
-     * This mode saves the RAW data to a DNG file.
-     */
-    bool raw();
-    std::string exposureModeAbbreviation();
-
 public:
     ~Camera();
+    
 protected:
     Camera();
     friend const Camera * camera();
-
-    void updateStatus();
-    void updateExposureMode();
-
-    bool saveBuffer(const std::string &);
-    void deleteBuffer();
-    std::string getFilename();
-
-    std::string path;
-    std::string lastFilename;
-    int imageNumber;
+public:
+    static const std::string STRING_VALUE_PARAMETERS[];
+public:
+    static const int UNKNOWN = -1000;
 };
 
 /** Returns the single Camera instance.

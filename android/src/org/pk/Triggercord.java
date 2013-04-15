@@ -8,9 +8,9 @@ import android.os.Environment;
 import android.graphics.*;
 import android.view.*;
 import android.widget.*;
-import android.widget.AdapterView.OnItemSelectedListener;
 
-public class Triggercord extends Activity implements OnItemSelectedListener
+public class Triggercord extends Activity implements
+    AdapterView.OnItemSelectedListener, CompoundButton.OnCheckedChangeListener
 {
     private static final String TAG = "Triggercord";
 
@@ -18,9 +18,13 @@ public class Triggercord extends Activity implements OnItemSelectedListener
     
     protected Camera camera;
     protected TextView mode, status;
+    protected ImageView isoIcon, apertureIcon, shutterIcon, ecIcon;
     protected Spinner iso, aperture, shutter, ec;
     protected ImageView photo;
     protected Button trigger, focus;
+    protected ToggleButton raw;
+    private int previewResolution;
+    private Bitmap currentImage;
     
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -29,45 +33,74 @@ public class Triggercord extends Activity implements OnItemSelectedListener
     	requestWindowFeature(Window.FEATURE_NO_TITLE);
     	setContentView(R.layout.triggercord);
         
-        mode =      (TextView)findViewById(R.id.ModeText);
-        iso =       (Spinner)findViewById(R.id.IsoSpinner);
-        aperture =  (Spinner)findViewById(R.id.ApertureSpinner);
-        shutter =   (Spinner)findViewById(R.id.ShutterSpinner);
-        ec =        (Spinner)findViewById(R.id.ECSpinner);
-        photo =     (ImageView)findViewById(R.id.PhotoView);
-        status =    (TextView)findViewById(R.id.StatusText);
-        trigger =   (Button)findViewById(R.id.TriggerButton);
+        mode =          (TextView)findViewById(R.id.ModeText);
+        isoIcon =       (ImageView)findViewById(R.id.IsoIcon);
+        iso =           (Spinner)findViewById(R.id.IsoSpinner);
+        apertureIcon =  (ImageView)findViewById(R.id.ApertureIcon);
+        aperture =      (Spinner)findViewById(R.id.ApertureSpinner);
+        shutterIcon =   (ImageView)findViewById(R.id.ShutterIcon);
+        shutter =       (Spinner)findViewById(R.id.ShutterSpinner);
+        ecIcon =        (ImageView)findViewById(R.id.ECIcon);
+        ec =            (Spinner)findViewById(R.id.ECSpinner);
+        photo =         (ImageView)findViewById(R.id.PhotoView);
+        status =        (TextView)findViewById(R.id.StatusText);
+        trigger =       (Button)findViewById(R.id.TriggerButton);
+        raw =           (ToggleButton)findViewById(R.id.RawToggle);
+
+        Display disp = getWindowManager().getDefaultDisplay();
+        previewResolution = disp.getWidth() * disp.getHeight();
     }
 
     @Override
     public void onResume()
     {
         super.onResume();
-        
-        if (camera == null)
-            camera = pentax.camera();
-            
+
+        TimerTask updateTask = new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                runOnUiThread(new Runnable() { public void run() { updateStatus(); } });
+            }
+        };
+        update = new Timer();
+        update.schedule(updateTask, 0, 1000);
+    }
+
+    @Override
+    public void onPause()
+    {
+        super.onPause();
+        if (update != null)
+            update.cancel();
+    }
+
+    public boolean loadCamera()
+    {
+        if (camera != null)
+            return true;
+
+        camera = pentax.camera();
         if (camera == null)
         {
             status.setText("No camera found");
-            return;
+            return false;
         }
-        else
+        
+        status.setText("Found camera: ");
+        status.append(camera.model());
+        java.io.File picDir;
+        picDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        picDir.mkdirs();
+        if (!picDir.exists())
         {
-            status.setText("Found camera: ");
-            status.append(camera.model());
-            java.io.File picDir;
-            picDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            picDir = new java.io.File("/sdcard/Pictures");
             picDir.mkdirs();
-            if (!picDir.exists())
-            {
-                picDir = new java.io.File("/sdcard/Pictures");
-                picDir.mkdirs();
-            }
-            if (!picDir.exists())
-                status.setText("Can't access storage.");
-            camera.setFileDestination(picDir.getAbsolutePath());
         }
+        if (!picDir.exists())
+            status.setText("Can't access storage.");
+        camera.setFileDestination(picDir.getAbsolutePath());
 
         ArrayAdapter<CharSequence> isoAdapter =
             new ArrayAdapter<CharSequence>(this, android.R.layout.simple_spinner_item);
@@ -106,7 +139,12 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         for (int i = 0; i < shutterSecondValues.length; i++)
         {
             if (shutterSecondValues[i] < camera.maximumShutter())
-                shutterAdapter.add(Integer.toString((int)shutterSecondValues[i]) + "\"");
+            {
+                if (shutterSecondValues[i] < 10)
+                    shutterAdapter.add(Float.toString(shutterSecondValues[i]) + "\"");
+                else
+                    shutterAdapter.add(Integer.toString((int)shutterSecondValues[i]) + "\"");
+            }
         }
         shutterAdapter.add(Integer.toString((int)camera.maximumShutter()) + "\"");
         shutter.setAdapter(shutterAdapter);
@@ -128,31 +166,18 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         shutter.setOnItemSelectedListener(this);
         ec.setOnItemSelectedListener(this);
 
-        TimerTask updateTask = new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                runOnUiThread(new Runnable() { public void run() { updateStatus(); } });
-            }
-        };
-        update = new Timer();
-        update.schedule(updateTask, 0, 1000);
-    }
+        raw.setOnCheckedChangeListener(this);
 
-    @Override
-    public void onPause()
-    {
-        super.onPause();
-        if (update != null)
-            update.cancel();
+        return true;
     }
 
     public void updateStatus()
     {
-        if (camera == null)
+        if (!loadCamera())
             return;
         mode.setText(camera.exposureModeAbbreviation());
+        updateExposureSpinners();
+        raw.setChecked(camera.raw());
     }
 
     public void shoot(View view)
@@ -160,10 +185,12 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         if (camera == null)
             return;
         String filename = camera.shoot();
-        status.setText("Shot. Saved to ");
+        status.setText("Shot saved to ");
         status.append(filename);
-        Bitmap img = BitmapFactory.decodeFile(filename);
-        photo.setImageBitmap(img);
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inSampleSize = 4;
+        currentImage = BitmapFactory.decodeFile(filename, opts);
+        photo.setImageBitmap(currentImage);
     }
     
     public void focus(View view)
@@ -214,8 +241,105 @@ public class Triggercord extends Activity implements OnItemSelectedListener
         }
     }
 
+    void setSpinnerToClosestValue(Spinner s, float f, int startAt, boolean invert)
+    {
+        float lastValue = Float.parseFloat((String)s.getItemAtPosition(startAt));
+        for (int i = startAt + 1; i < s.getCount(); i++)
+        {
+            String item = (String)s.getItemAtPosition(i);
+            float value;
+            if (invert)
+            {
+                if (item.endsWith("\""))
+                {
+                    item = item.replace("\"", "");
+                    value = Float.parseFloat(item);
+                }
+                else
+                    value = 1f / Float.parseFloat(item);
+            }
+            else
+                value = Float.parseFloat(item);
+            if (Math.abs(lastValue - f) <= Math.abs(value - f))
+            {
+                s.setSelection(i - 1, false); //this shouldn't call the listener
+                return;
+            }
+        }
+        s.setSelection(s.getCount() - 1, false); 
+    }
+
+    void updateExposureSpinners()
+    {
+        if (camera == null)
+            return;
+        
+        int i = (int)camera.iso();
+        if (i == -1)
+        {
+            iso.setSelection(0, false);
+            isoIcon.setColorFilter(Color.GREEN);
+        }
+        else
+        {
+            setSpinnerToClosestValue(iso, i, 1, false);
+            isoIcon.setColorFilter(Color.BLACK);
+        }
+
+        float a = camera.aperture();
+        if (a < 0)
+        {
+            aperture.setSelection(0, false);
+            apertureIcon.setColorFilter(Color.GREEN);
+        }
+        else
+        {
+            setSpinnerToClosestValue(aperture, a, 1, false);
+            apertureIcon.setColorFilter(Color.BLACK);
+        }
+
+        float s = camera.shutter();
+        if (s < 0)
+        {
+            shutter.setSelection(0, false);
+            shutterIcon.setVisibility(View.VISIBLE);
+            shutterIcon.setColorFilter(Color.GREEN);
+        }
+        else
+        {
+            setSpinnerToClosestValue(shutter, s, 1, true);
+            boolean oneOver = !((String)shutter.getSelectedItem()).endsWith("\"");
+            shutterIcon.setVisibility(oneOver? View.VISIBLE : View.INVISIBLE);
+            shutterIcon.setColorFilter(Color.BLACK);
+        }
+
+        float e = camera.exposureCompensation();
+        if (Math.abs(e) < .5f)
+        {
+            setSpinnerToClosestValue(ec, e, 0, false);
+            ecIcon.setColorFilter(Color.GREEN);
+        }
+        else
+        {
+            setSpinnerToClosestValue(ec, e, 0, false);
+            ecIcon.setColorFilter(Color.BLACK);
+        }
+    }
+
     public void onNothingSelected(AdapterView<?> parent)
     {
+    }
+
+    public void onCheckedChanged(CompoundButton parent, boolean isChecked)
+    {
+        if (camera == null)
+            return;
+        switch(parent.getId())
+        {
+            case R.id.RawToggle:
+                camera.setRaw(isChecked);
+                break;
+        }
     }
 
 
@@ -225,16 +349,19 @@ public class Triggercord extends Activity implements OnItemSelectedListener
 
     protected final float[] shutterOneOverValues = {
         8000, 6000, 4000, 3000, 2000, 1500, 1000, 750, 500,
-        350, 250, 180, 125, 90, 60, 45, 30, 20, 15, 20, 8, 6, 4, 3, 2, 1.4f, 1};
+        350, 250, 180, 125, 90, 60, 45, 30, 20, 15, 8, 6, 4, 3, 2};
 
     protected final float[] shutterSecondValues = {
-        1.5f, 2f, 3f, 4f, 6, 8, 10, 15, 20, 30, 40, 60};
+        0.7f, 1f, 1.5f, 2f, 3f, 4f, 6, 8, 10, 15, 20, 30, 40, 60};
 
     protected final float[] ecValues = {
-        -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        -9, -8.5f, -8, -7.5f, -7, -6.5f, -6, -5.5f, -5, -4.5f, -4,
+        -3.5f, -3, -2.5f, -2, -1.5f, -1, -0.5f, 0, 0.5f, 1, 1.5f, 2,
+        2.5f, 3, 3.5f, 4, 4.5f, 5, 5.5f, 6, 6.5f, 7, 7.5f, 8, 8.5f, 9};
 
     protected final float[] isoValues = {
-        50, 80, 100, 140, 200, 280, 400, 560, 800, 1100, 1600, 2200, 3200, 4500, 6400, 9000, 12800,
+        50, 80, 100, 140, 200, 280, 400, 560, 800, 1100, 1600,
+        2200, 3200, 4500, 6400, 9000, 12800,
         18000, 25600, 36000, 51200, 64000, 100000, 160000 };
 
     static

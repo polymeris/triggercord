@@ -22,6 +22,7 @@
             android:textStyle="bold" />
 
         <ImageView
+            android:id="@+id/IsoIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -37,6 +38,7 @@
             android:layout_weight="8" />
 
         <ImageView
+            android:id="@+id/ApertureIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -52,6 +54,7 @@
             android:layout_weight="8" />
 
         <ImageView
+            android:id="@+id/ShutterIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -67,6 +70,7 @@
             android:layout_weight="8" />
 
         <ImageView
+            android:id="@+id/ECIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"

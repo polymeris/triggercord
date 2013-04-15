@@ -6,6 +6,7 @@ extern "C"
 }
 
 #include "pentax.h"
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -17,7 +18,6 @@ extern "C"
 
 
 static char *theDevice = NULL;
-static time_t theLastUpdateTime = -1;
 static pslr_handle_t theHandle;
 static pslr_status theStatus;
 static Camera * theCamera = NULL;
@@ -28,42 +28,307 @@ void cleanup()
 	delete theCamera;
 }
 
-bool apertureIsAuto, shutterIsAuto, isoIsAuto;
-
-const std::string Camera::model()
+inline float roundToSignificantDigits(float f, int d)
 {
-    return pslr_camera_name(theHandle);
+  int p = f - log10(f);
+  return floor(f * pow(10., p) + .5) / pow(10., p);
 }
 
-pslr_exposure_mode_t getExposureMode(bool aA, bool aS, bool aI)
+inline int roundFloat(float f)
 {
-    if  ((!aA) && (!aS) && (!aI))
-	return PSLR_EXPOSURE_MODE_M;
-    if ((!aA) && (!aS))
-	return PSLR_EXPOSURE_MODE_TAV;
-    if ((!aA))
-	return PSLR_EXPOSURE_MODE_AV;
-    if (( aA) && (!aS))
-	return PSLR_EXPOSURE_MODE_TV;
-    if (( aA) && ( aS) && (!aI))
-	return PSLR_EXPOSURE_MODE_SV;
-    return PSLR_EXPOSURE_MODE_P;
+    return f > 0.0 ? floor(f + 0.5) : ceil(f - 0.5);
 }
 
-void Camera::updateExposureMode()
+inline double log2(double x)
 {
-    updateStatus();
-    pslr_exposure_mode_t m = getExposureMode(apertureIsAuto, shutterIsAuto, isoIsAuto);
-    pslr_set_exposure_mode(theHandle, m);
-    updateStatus();
+    return log(x) / log(2.);
 }
 
-void Camera::updateStatus()
+const Stop Stop::UNKNOWN = Stop(-1000);
+const Stop Stop::AUTO = Stop(-2000);
+const Stop Stop::HALF = Stop::fromHalfStops(1);
+const Stop Stop::THIRD = Stop::fromThirdStops(1);
+
+Stop::Stop(int stops) : sixthStops(6 * stops)
 {
-    if (theLastUpdateTime - time(NULL))
+}
+
+Stop Stop::fromHalfStops(int hs)
+{
+    return fromSixthStops(hs * 3);
+}
+
+Stop Stop::fromThirdStops(int ts)
+{
+    return fromSixthStops(ts * 3);
+}
+
+Stop Stop::fromSixthStops(int ss)
+{
+    Stop ret;
+    ret.sixthStops = ss;
+    return ret;
+}
+
+Stop Stop::fromAperture(float a)
+{
+    return fromSixthStops(roundFloat(log2(a) * 12.));
+}
+
+Stop Stop::fromShuttertime(float t)
+{
+    return fromSixthStops(roundFloat(log2(t) * 6.));
+}
+
+Stop Stop::fromShutterspeed(float s)
+{
+    return fromSixthStops(roundFloat(log2(s) * -6.));
+}
+
+Stop Stop::fromISO(int i)
+{
+    return fromSixthStops(roundFloat(log2(float(i) / 100.f) * 6.));
+}
+
+Stop Stop::fromExposureCompensation(float ec)
+{
+    return fromSixthStops(roundFloat(ec * 6.));
+}
+
+Stop & Stop::operator+=(const Stop & other)
+{
+    sixthStops += other.sixthStops;
+    return *this;
+}
+
+Stop & Stop::operator-=(const Stop & other)
+{
+    sixthStops -= other.sixthStops;
+    return *this;
+}
+
+const Stop Stop::operator+(const Stop & other) const
+{
+    Stop ret = *this;
+    ret += other;
+    return ret;
+}
+
+const Stop Stop::operator-(const Stop & other) const
+{
+    Stop ret = *this;
+    ret -= other;
+    return ret;
+}
+
+const Stop Stop::operator*(int x) const
+{
+    return fromSixthStops(sixthStops * x);
+}
+
+const Stop Stop::plus(const Stop & other) const
+{
+    return *this + other;
+}
+
+const Stop Stop::minus(const Stop & other) const
+{
+    return *this - other;
+}
+
+const Stop Stop::times(int x) const
+{
+    return *this * x;
+}
+
+float Stop::asAperture() const
+{
+    return roundToSignificantDigits(powf(2., (float)sixthStops / 12.), 2);
+}
+
+float Stop::asShuttertime() const
+{
+    return roundToSignificantDigits(powf(2., (float)sixthStops / 6.), 2);
+}
+
+float Stop::asShutterspeed() const
+{
+    return roundToSignificantDigits(powf(2., (float)sixthStops / -6.), 2);
+}
+
+int Stop::asISO() const
+{
+    return (int)roundToSignificantDigits(100. * powf(2., (float)sixthStops / 6.), 2);
+}
+
+float Stop::asExposureCompensation() const
+{
+    return roundToSignificantDigits((float)sixthStops / 6., 3);
+}
+
+
+pslr_rational_t stopAsRationalAperture(const Stop & stop)
+{
+    pslr_rational_t r;
+    float a = stop.asAperture();
+    if (a > 10.)
     {
-	pslr_get_status(theHandle, &theStatus);
-	theLastUpdateTime = time(NULL);
+	r.nom = a;
+	r.denom = 1;
+    }
+    else
+    {
+	r.nom = 10. * a;
+	r.denom = 10;
+    }
+    return r;
+}
+
+pslr_rational_t stopAsRationalShuttertime(const Stop & stop)
+{
+    pslr_rational_t r;
+    float s = stop.asShuttertime();
+    if (s < .3)
+    {
+	r.nom = 1;
+	r.denom = 1.0 / s;
+    }
+    else if (s < 2.)
+    {
+	r.nom = 10;
+	r.denom = 10.0 / s;
+    }
+    else
+    {
+	r.nom = int(s);
+	r.denom = 1;
+    }
+    return r;
+}
+
+pslr_rational_t asRationalExposureCompensation(const Stop & stop)
+{
+    pslr_rational_t r;
+    r.nom = stop.asExposureCompensation() * 10;
+    r.denom = 10;
+    return r;
+}
+
+float asFloat(const pslr_rational_t & r)
+{
+    return float(r.nom) / float(r.denom);
+}
+
+void Camera::set(const Parameter & p, const Stop & s)
+{
+    requestedStopChanges[p] = s;
+}
+
+void Camera::set(const Parameter & p, const String & s)
+{
+    requestedStringChanges[p] = s;
+}
+
+Stop Camera::stop(const Parameter & p) const
+{
+    return currentStopValues.at(p);
+}
+
+std::string Camera::string(const Parameter & p) const
+{
+    return currentStringValues.at(p);
+}
+
+int Camera::minimum(const Parameter & p) const
+{
+    
+}
+
+int Camera::maximum(const Parameter & p) const
+{
+}
+
+std::string Camera::accepptedString(const Parameter & p, int)
+{
+}
+
+void Camera::applyChanges()
+{
+}
+
+const std::string Camera::STRING_VALUE_PARAMETERS[] =
+{
+    "File Destination", "Flash Mode", "Drive Mode", "Autofocus Mode", "Autofocus Point",
+    "Metering Mode", "Color Space"
+};
+
+const char* EXPOSURE_MODES[] = {
+    "P", "Green", "?", "?", "?", "Tv", "Av", "?", "?", "M", "B", "Av", "M", "B", "TAv", "Sv", "X"
+};
+
+namespace xtern
+{
+    #include "pslr_strings.h"
+}
+#define STRING_IN_ARRAY(arr, idx) ((idx >= sizeof(arr)/sizeof(std::string))? "?" : arr[idx])
+
+std::string retrieveStringValue(const Camera::Parameter & p)
+{
+    //~ if (p == "File Destination")  return 
+    if (p == "Flash Mode")
+	return STRING_IN_ARRAY(xtern::pslr_flash_mode_str, theStatus.flash_mode);
+    if (p == "Drive Mode")
+	return STRING_IN_ARRAY(xtern::pslr_drive_mode_str, theStatus.drive_mode);
+    if (p == "Autofocus Mode")
+	//~ return STRING_IN_ARRAY(x::pslr_af_mode_str, theStatus.af_mode);
+    //~ if (p == "Autofocus Point")
+	//~ return STRING_IN_ARRAY(
+    if (p == "Metering Mode")
+	return STRING_IN_ARRAY(xtern::pslr_ae_metering_str, theStatus.ae_metering_mode);
+    if (p == "Color Space")
+	return STRING_IN_ARRAY(xtern::pslr_color_space_str, theStatus.color_space);
+    //~ if (p == "Image Format")
+	//~ return STRING_IN_ARRAY(IMAGE_FORMATS, theStatus.image_format);
+    //~ if (p == "Raw Format")
+	//~ return STRING_IN_ARRAY(pslr_raw_format_str, theSt
+    if (p == "Exposure Mode")
+	return STRING_IN_ARRAY(EXPOSURE_MODES, theStatus.exposure_mode);
+    //~ if (p == "Whitebalance Mode") return STRING_IN_ARRAY(pslr_white_balance_mode_str, theS
+    return "?";
+}
+
+Stop retrieveStopValue(const Camera::Parameter & p)
+{
+    if (p == "Shutterspeed") return Stop::fromShutterspeed(asFloat(theStatus.current_aperture));
+    if (p == "Aperture")     return Stop::fromAperture(asFloat(theStatus.current_aperture));
+    if (p == "ISO")          return Stop::fromISO(theStatus.fixed_iso);
+    if (p == "Exposure Compensation") return Stop::fromExposureCompensation(asFloat(theStatus.ec));
+    if (p == "Flash Exposure Compensation")
+	return Stop::fromExposureCompensation(theStatus.flash_exposure_compensation);
+    return Stop::UNKNOWN;
+}
+    
+int retrieveIntValue(const Camera::Parameter & p)
+{
+    //~ if (p == "Whitebalance Adjustment Magenta/Green") return 
+    //~ if (p == "Whitebalance Adjustment Blue/Amber")    return
+    if (p == "JPEG Quality")    return theStatus.jpeg_quality;
+    if (p == "JPEG Resolution") return theStatus.jpeg_resolution;
+    if (p == "JPEG Image Tone") return theStatus.jpeg_image_tone;
+    if (p == "JPEG Sharpness")  return theStatus.jpeg_sharpness;
+    if (p == "JPEG Contrast")   return theStatus.jpeg_contrast;
+    if (p == "JPEG Saturation") return theStatus.jpeg_saturation;
+    if (p == "JPEG Hue")        return theStatus.jpeg_hue;
+    return Camera::UNKNOWN;
+}
+
+void Camera::updateValues()
+{
+    pslr_get_status(theHandle, &theStatus);
+    for (int i = 0; i < sizeof(STRING_VALUE_PARAMETERS); i++)
+    {
+	const std::string & param = STRING_VALUE_PARAMETERS[i];
+	currentStringValues[param] = retrieveStringValue(param);
     }
 }
 
@@ -80,7 +345,7 @@ const Camera * camera()
     else
     {
 	DPRINT("Found camera!");
-	DPRINT(theCamera->model().c_str());
+	//~ DPRINT(theCamera->model().c_str());
     }
     return theCamera;
 }
@@ -88,9 +353,7 @@ const Camera * camera()
 Camera::Camera()
 {
     pslr_connect(theHandle);
-    updateStatus();
-    path = getpwuid(getuid())->pw_dir;
-    imageNumber = 0;
+    //~ path = getpwuid(getuid())->pw_dir;
 }
 
 Camera::~Camera()
@@ -98,368 +361,4 @@ Camera::~Camera()
     pslr_disconnect(theHandle);
     pslr_shutdown(theHandle);
     theCamera = NULL;
-}
-
-void Camera::focus()
-{
-    pslr_focus(theHandle);
-    DPRINT("Focused.");
-}
-
-std::string Camera::shoot()
-{
-    pslr_shutter(theHandle);
-    updateStatus();
-    std::string fn = getFilename();
-    while (!saveBuffer(fn))
-	usleep(10000);
-    deleteBuffer();
-    DPRINT("Shot.");
-    return lastFilename;
-}
-
-void Camera::setExposure(float a, float s, int i)
-{
-    this->setAperture(a);
-    this->setShutter(s);
-    this->setIso(i);
-}
-
-void Camera::setMetering(int m, float ec)
-{
-    this->setExposureCompensation(ec);
-}
-
-void Camera::setAutofocus(int m, int pt)
-{
-    this->setAutofocusPoint(pt);
-}
-
-void Camera::setAperture(float a)
-{
-    if (a < 0)
-    {
-	if (!apertureIsAuto)
-	{
-	    apertureIsAuto = true;
-	    updateExposureMode();
-	}
-	return;
-    }
-
-    apertureIsAuto = false;
-    updateExposureMode();
-
-    a = std::min(a, maximumAperture());
-    a = std::max(a, minimumAperture());
-
-    pslr_rational_t rational;
-    if (a >= 11.0)
-    {
-	rational.nom = int(a);
-	rational.denom = 1;
-    }
-    else
-    {
-	rational.nom = int(a * 10);
-	rational.denom = 10;
-    }
-    pslr_set_aperture(theHandle, rational);
-}
-
-void Camera::setShutter(float s)
-{
-    if (s < 0)
-    {
-	if (!shutterIsAuto)
-	{
-	    shutterIsAuto = true;
-	    updateExposureMode();
-	}
-	return;
-    }
-
-    shutterIsAuto = false;
-    updateExposureMode();
-
-    s = std::min(s, maximumShutter());
-    s = std::max(s, minimumShutter());
-
-    pslr_rational_t rational;
-    if (s < .3)
-    {
-	rational.nom = 1;
-	rational.denom = int(1.0 / s);
-    }
-    else if (s < 2.)
-    {
-	rational.nom = 20;
-	rational.denom = int(20.0 / s);
-    }
-    else
-    {
-	rational.nom = int(s);
-	rational.denom = 1;
-    }
-    DPRINT("S: %i/%i", rational.nom, rational.denom);
-    pslr_set_shutter(theHandle, rational);
-}
-
-void Camera::setIso(int i, int min, int max)
-{
-    if (i == -1)
-    {
-	if (!isoIsAuto)
-	{
-	    isoIsAuto = true;
-	    updateExposureMode();
-	}
-	return;
-    }
-
-    isoIsAuto = false;
-    updateExposureMode();
-
-    i = std::min(i, (int)maximumIso());
-    i = std::max(i, (int)minimumIso());
-    
-    if (min == -1)
-	min = i;
-    if (max == -1)
-	max = i;
-
-    if (min == -100)
-	min = minimumAutoIso();
-    if (max == -100)
-	max = maximumAutoIso();
-    pslr_set_iso(theHandle, i, min, max);
-}
-
-void Camera::setExposureCompensation(float ec)
-{
-    pslr_rational_t rational;
-    rational.nom = int(ec * 10);
-    rational.denom = 10;
-    pslr_set_ec(theHandle, rational);
-}
-
-void Camera::setAutofocusPoint(int pt)
-{
-    if (pt == KEEP)
-	return;
-    pslr_select_af_point(theHandle, pt);
-}
-
-void Camera::setRaw(bool enabled)
-{
-    if (enabled)
-	pslr_set_image_format(theHandle, PSLR_IMAGE_FORMAT_RAW);
-    else
-	pslr_set_image_format(theHandle, PSLR_IMAGE_FORMAT_JPEG);
-}
-
-bool Camera::setFileDestination(std::string path)
-{
-    if (access(path.c_str(), F_OK) != 0)
-	return false;
-    struct stat status;
-    stat(path.c_str(), &status);
-    if (!S_ISDIR(status.st_mode))
-	return false;
-    this->path = path;
-    return true;
-}
-
-std::string Camera::fileDestination()
-{
-    return path;
-}
-
-std::string Camera::fileExtension()
-{
-    if (raw())
-	return "dng";
-    return "jpg";
-}
-
-bool Camera::raw()
-{
-    updateStatus();
-    return theStatus.image_format != PSLR_IMAGE_FORMAT_JPEG;
-}
-
-void Camera::setJpegAdjustments(int sat, int hue, int con, int sha)
-{
-    if (sat != KEEP)
-	pslr_set_jpeg_saturation(theHandle, sat);
-    if (hue != KEEP)
-	pslr_set_jpeg_hue(theHandle, hue);
-    if (con != KEEP)
-	pslr_set_jpeg_contrast(theHandle, con);
-    if (sha != KEEP)
-	pslr_set_jpeg_sharpness(theHandle, sha);
-}
-
-float rationalAsFloat(pslr_rational_t rat)
-{
-    return float(rat.nom) / float(rat.denom);
-}
-
-float Camera::aperture()
-{
-    updateStatus();
-    return rationalAsFloat(theStatus.current_aperture);
-}
-
-float Camera::shutter()
-{
-    updateStatus();
-    return rationalAsFloat(theStatus.current_shutter_speed);    
-}
-
-float Camera::iso()
-{
-    updateStatus();
-    return float(theStatus.current_iso);
-}
-
-float Camera::exposureCompensation()
-{
-    updateStatus();
-    return rationalAsFloat(theStatus.ec);
-}
-
-int Camera::focusPoint()
-{
-    updateStatus();
-    return theStatus.selected_af_point;
-}
-
-int Camera::exposureMode()
-{
-    updateStatus();
-    return theStatus.exposure_mode;
-}
-
-int Camera::autofocusMode()
-{
-    updateStatus();
-    return theStatus.af_mode;
-}
-
-float Camera::minimumAutoIso()
-{
-    return theStatus.auto_iso_min;
-}
-
-float Camera::maximumAutoIso()
-{
-    return theStatus.auto_iso_max;
-}
-
-std::string Camera::getFilename()
-{
-    std::stringstream filename;
-    do
-    {
-	filename.str(std::string());
-	filename.clear();
-	imageNumber++;
-	filename << fileDestination() << "/tc" << imageNumber << "." << fileExtension();
-    } while (std::ifstream(filename.str().c_str())); // if it exists, find another name
-    return filename.str();
-}
-
-bool Camera::saveBuffer(const std::string & filename)
-{
-    std::ofstream output;
-    unsigned char buf[65536];
-    int bytes;
-    DPRINT("Writing to %s.", filename.c_str());
-    if (pslr_buffer_open(
-	theHandle, 0,
-	raw() ? PSLR_BUF_DNG : pslr_get_jpeg_buffer_type(theHandle, theStatus.jpeg_quality),
-	theStatus.jpeg_resolution)
-	    != PSLR_OK)
-    {
-	DPRINT("Failed to open camera buffer.");
-	return false;
-    }
-    output.open(filename.c_str());
-    
-    DPRINT("Buffer length: %d.", pslr_buffer_get_size(theHandle));
-    do {
-        bytes = pslr_buffer_read(theHandle, buf, sizeof (buf));
-        output.write((char *)buf, bytes);
-    } while (bytes);
-    output.close();
-
-    lastFilename = filename;
-    return true;
-}
-
-void Camera::deleteBuffer()
-{
-    pslr_delete_buffer(theHandle, 0);
-}
-
-float Camera::maximumAperture()
-{
-    return rationalAsFloat(theStatus.lens_max_aperture);
-}
-
-float Camera::minimumAperture()
-{
-    return rationalAsFloat(theStatus.lens_min_aperture);
-}
-
-float Camera::maximumShutter()
-{
-    return 30.0;
-}
-
-float Camera::minimumShutter()
-{
-    return 1.0 / pslr_get_model_fastest_shutter_speed(theHandle);
-}
-
-float Camera::maximumIso()
-{
-    return pslr_get_model_extended_iso_max(theHandle);
-}
-float Camera::minimumIso()
-{
-    return pslr_get_model_extended_iso_min(theHandle);
-}
-
-float Camera::maximumExposureCompensation()
-{
-    return 5;
-}
-
-float Camera::minimumExposureCompensation()
-{
-    return -5;
-}
-
-std::string Camera::exposureModeAbbreviation()
-{
-    switch (exposureMode())
-    {
-	case 2:
-	case 3:
-	case PSLR_EXPOSURE_MODE_GREEN:
-	case PSLR_EXPOSURE_MODE_P: return "P";
-	case PSLR_EXPOSURE_MODE_SV: return "Sv";
-	case PSLR_EXPOSURE_MODE_AV_OFFAUTO:
-	case PSLR_EXPOSURE_MODE_AV: return "Av";
-	case PSLR_EXPOSURE_MODE_TV: return "Tv";
-	case PSLR_EXPOSURE_MODE_TAV: return "TAv";
-	case PSLR_EXPOSURE_MODE_M_OFFAUTO:
-	case PSLR_EXPOSURE_MODE_M: return "M";
-	case PSLR_EXPOSURE_MODE_X: return "X";
-	case PSLR_EXPOSURE_MODE_B_OFFAUTO:
-	case PSLR_EXPOSURE_MODE_B: return "B";
-	default: return "?";
-    }
 }
