@@ -16,15 +16,6 @@
     %}
 #endif
 
-#ifdef SWIGJAVA
-    #define AUTO       (-1)
-    #define SINGLE     (-2)
-    #define CONTINUOUS (-3)
-    #define CENTER     (-4)
-    #define SPOT       (-5)
-    #define KEEP     (-100)
-#endif
-
 class Stop
 {
 public:
@@ -54,6 +45,11 @@ public:
     float asShuttertime() const;
     int asISO() const;
     float asExposureCompensation() const;
+    int asInt() const;
+
+    std::string getPrettyString() const;
+    std::string getSecondsString() const;
+    std::string getOneOverString() const;
 
 public:
     static const Stop UNKNOWN;
@@ -76,20 +72,23 @@ public:
 public:
     void set(const Parameter &, const Stop &);
     void set(const Parameter &, const String &);
-    Stop stop(const Parameter &) const;
-    String string(const Parameter &) const;
-    int minimum(const Parameter &) const;
-    int maximum(const Parameter &) const;
-    String accepptedString(const Parameter &, int);
+    void set(const Parameter &, int);
+    Stop get(const Parameter &) const;
+    String getString(const Parameter &) const;
+    int getMinimum(const Parameter &) const;
+    int getMaximum(const Parameter &) const;
+    String getStringOption(const Parameter &, int);
 
+    void startUpdating(long ms = 2500);
+    void stopUpdating();
+    void applyChanges();
+    void updateValues();
 protected:
     std::map<Parameter, Stop> requestedStopChanges;
     std::map<Parameter, String> requestedStringChanges;
     std::map<Parameter, Stop> currentStopValues;
     std::map<Parameter, String> currentStringValues;
-    void applyChanges();
-    void updateValues();
-    
+
 public:
     ~Camera();
     
@@ -98,8 +97,7 @@ protected:
     friend const Camera * camera();
 public:
     static const std::string STRING_VALUE_PARAMETERS[];
-public:
-    static const int UNKNOWN = -1000;
+    static const std::string STOP_VALUE_PARAMETERS[];
 };
 
 /** Returns the single Camera instance.
