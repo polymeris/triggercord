@@ -12,7 +12,7 @@
         android:orientation="horizontal" >
 
         <TextView
-            android:id="@+id/ModeText"
+            android:id="@+id/modeText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -22,7 +22,7 @@
             android:textStyle="bold" />
 
         <ImageView
-            android:id="@+id/IsoIcon"
+            android:id="@+id/isoIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -31,7 +31,7 @@
             android:src="@drawable/iso" />
 
         <Spinner
-            android:id="@+id/IsoSpinner"
+            android:id="@+id/isoSpinner"
             android:tag="ISO"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -39,7 +39,7 @@
             android:layout_weight="8" />
 
         <ImageView
-            android:id="@+id/ApertureIcon"
+            android:id="@+id/apertureIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -48,7 +48,7 @@
             android:src="@drawable/fover" />
 
         <Spinner
-            android:id="@+id/ApertureSpinner"
+            android:id="@+id/apertureSpinner"
             android:tag="Aperture"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -56,7 +56,7 @@
             android:layout_weight="8" />
 
         <ImageView
-            android:id="@+id/ShutterIcon"
+            android:id="@+id/shutterIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -65,7 +65,7 @@
             android:src="@drawable/oneover" />
 
         <Spinner
-            android:id="@+id/ShutterSpinner"
+            android:id="@+id/shutterSpinner"
             android:tag="Shutterspeed"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -73,7 +73,7 @@
             android:layout_weight="8" />
 
         <ImageView
-            android:id="@+id/ECIcon"
+            android:id="@+id/ecIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
@@ -82,7 +82,7 @@
             android:src="@drawable/ec" />
 
         <Spinner
-            android:id="@+id/ECSpinner"
+            android:id="@+id/ecSpinner"
             android:tag="Exposure Compensation"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -97,7 +97,7 @@
     >
 
         <ImageView
-            android:id="@+id/PhotoView"
+            android:id="@+id/photoView"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_centerInParent="true"
@@ -106,7 +106,7 @@
             android:src="@drawable/icon" />
 
         <TextView
-            android:id="@+id/StatusText"
+            android:id="@+id/statusText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
@@ -115,7 +115,7 @@
             android:text="@string/loading" />
 
         <Button
-            android:id="@+id/TriggerButton"
+            android:id="@+id/triggerButton"
             android:tag="Shoot"
             android:layout_width="96dp"
             android:layout_height="96dp"
@@ -124,12 +124,12 @@
             android:text="@string/shoot" />
 
         <Button
-            android:id="@+id/FocusButton"
+            android:id="@+id/focusButton"
             android:tag="Focus"
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_alignParentBottom ="true"
-            android:layout_toLeftOf="@+id/TriggerButton"
+            android:layout_toLeftOf="@+id/triggerButton"
             android:text="@string/focus"
         />
     </RelativeLayout>

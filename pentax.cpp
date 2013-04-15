@@ -277,17 +277,21 @@ void Camera::set(const Parameter & p, const String & s)
 Stop Camera::get(const Parameter & p) const
 {
     LOCK_MUTEX;
-    Stop s = currentStopValues.at(p);
+    std::map<Parameter, Stop>::const_iterator it = currentStopValues.find(p);
     UNLOCK_MUTEX;
-    return s;
+    if (it == currentStopValues.end())
+	return Stop::UNKNOWN;
+    return it->second;
 }
 
 std::string Camera::getString(const Parameter & p) const
 {
     LOCK_MUTEX;
-    std::string s = currentStringValues.at(p);
+    std::map<Parameter, std::string>::const_iterator it = currentStringValues.find(p);
     UNLOCK_MUTEX;
-    return s;
+    if (it == currentStringValues.end())
+	return "?";
+    return it->second;
 }
 
 int Camera::getMinimum(const Parameter & p) const
@@ -539,11 +543,5 @@ const Camera * camera()
 	atexit(cleanup);
 	theCamera = new Camera();
     }
-
-    if (!theCamera)
-	DPRINT("Camera not found.");
-    else
-	DPRINT("Found camera!");
-
     return theCamera;
 }
