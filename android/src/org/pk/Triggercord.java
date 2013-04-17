@@ -41,8 +41,6 @@ public class Triggercord extends Activity implements
         status =        (TextView)findViewById(R.id.statusText);
         Display disp = getWindowManager().getDefaultDisplay();
 
-        registerChildListeners((ViewGroup)findViewById(R.id.mainFragment));
-        registerChildListeners((ViewGroup)findViewById(R.id.settingsFragment));
     }
 
     @Override
@@ -76,7 +74,12 @@ public class Triggercord extends Activity implements
         {
             View child = vg.getChildAt(i);
             if (child instanceof AdapterView)
-                ((AdapterView)child).setOnItemSelectedListener(this);
+            {
+                String tag = (String)child.getTag();
+                AdapterView av = (AdapterView)child;
+                av.setAdapter(new ParameterAdapter(camera, tag));
+                av.setOnItemSelectedListener(this);
+            }
             else if (child instanceof CompoundButton)
                 ((CompoundButton)child).setOnCheckedChangeListener(this);
             else if (child instanceof Button)
@@ -86,10 +89,36 @@ public class Triggercord extends Activity implements
         }
     }
 
+    protected void updateChildren(ViewGroup vg)
+    {
+        Log.d(TAG, "updating children of " + vg.getId());
+        if (camera == null)
+            return;
+        for (int i = 0; i < vg.getChildCount(); i++)
+        {
+            View child = vg.getChildAt(i);
+            if (child instanceof AdapterView)
+            {
+                AdapterView av = (AdapterView)child;
+                ((BaseAdapter)av.getAdapter()).notifyDataSetChanged();
+                Log.d(TAG, "updated AV: " + av.getTag() + ", " +
+                    ((BaseAdapter)av.getAdapter()).getCount() + " items");
+            }
+            //~ else if (child instanceof CompoundButton)
+                //~ this.updateChild((CompoundButton)child);
+            //~ else if (child instanceof Button)
+                //~ this.updateChild((Button)child);
+            else if (child instanceof ViewGroup)
+                this.updateChildren((ViewGroup)child);
+        }
+    }
+
     public void onUpdate()
     {
         if (!loadCamera())
             return;
+        updateChildren((ViewGroup)findViewById(R.id.mainFragment));
+        updateChildren((ViewGroup)findViewById(R.id.settingsFragment));
     }
 
     //~ public void on(View view)
@@ -110,6 +139,21 @@ public class Triggercord extends Activity implements
         Log.d(TAG, "onClick(parent): parent.getID() == " + parent.getId());
         if (camera == null)
             return;
+
+        if (parent.getId() == R.id.triggerButton)
+        {
+            String filename = camera.shoot();
+            status.setText("Shot. Saved to ");
+            status.append(filename);
+            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+            bitmapOptions.inSampleSize = 4;
+            currentImage = BitmapFactory.decodeFile(filename, bitmapOptions);
+            photo.setImageBitmap(currentImage);
+            return;
+        }
+
+        if (parent.getId() == R.id.triggerButton)
+            camera.focus();
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int pos, long id)
@@ -117,13 +161,12 @@ public class Triggercord extends Activity implements
         Log.d(TAG, "onItemSelected(...): parent.getId() == " + parent.getId());
         if (camera == null)
             return;
+        ParameterAdapter adapter = (ParameterAdapter)parent.getAdapter();
+        adapter.itemSelected(pos);
     }
 
     public void onNothingSelected(AdapterView<?> parent)
     {
-        Log.d(TAG, "onNothingSelected(parent): parent.getId() == " + parent.getId());
-        if (camera == null)
-            return;
     }
 
     public void onCheckedChanged(CompoundButton parent, boolean isChecked)
@@ -136,7 +179,7 @@ public class Triggercord extends Activity implements
         {
             ToggleButton button = (ToggleButton)parent;
             Log.v(TAG, "    button.getTag() == " + (String)button.getTag());
-            camera.set((String)button.getTag(),
+            camera.setString((String)button.getTag(),
                 (isChecked ? button.getTextOn() : button.getTextOff()).toString());
         }
         catch (ClassCastException ex)
@@ -167,11 +210,87 @@ public class Triggercord extends Activity implements
         }
         if (!picDir.exists())
             status.setText("Can't access storage.");
-        camera.set("File Destination", picDir.getAbsolutePath());
+        camera.setFileDestination(picDir.getAbsolutePath());
 
         camera.startUpdating();
         
+        registerChildListeners((ViewGroup)findViewById(R.id.mainFragment));
+        registerChildListeners((ViewGroup)findViewById(R.id.settingsFragment));
         return true;
+    }
+
+    class ParameterAdapter extends BaseAdapter
+    {
+        ParameterAdapter(Camera camera, String parameter)
+        {
+            this.camera = camera;
+            String[] p = parameter.split(":");
+            if (p.length < 2)
+            {
+                isString = true;
+                this.parameter = p[0];
+            }
+            else if (p[0] == "String")
+            {
+                isString = true;
+                this.parameter = p[1];
+            }
+            else
+            {
+                isString = false;
+                this.parameter = p[1];
+            }
+        }
+        
+        public int getCount()
+        {
+            if (camera == null)
+                return 0;
+            if (isString)
+                return camera.getStringCount(parameter);
+            else
+                return camera.getStopCount(parameter);
+        }
+
+        public Object getItem(int pos)
+        {
+            if (camera == null)
+                return null;
+            if (isString)
+                return camera.getStringOption(parameter, pos);
+            else
+                return camera.getStopOptionAsString(parameter, pos);
+        }
+
+        public long getItemId(int position)
+        {
+            return -1;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent)
+        {
+            String item = (String)getItem(position);
+            if (convertView != null && convertView instanceof TextView)
+            {
+                ((TextView)convertView).setText(item);
+                return convertView;
+            }
+            TextView newView = new TextView(parent.getContext());
+            newView.setText(item);
+            return newView;
+        }
+
+        public void itemSelected(int pos)
+        {
+            if (isString)
+                camera.setStringByIndex(parameter, pos);
+            else
+                camera.setStopByIndex(parameter, pos);
+        }
+
+        private Camera camera;
+        private String parameter;
+        boolean isString;
     }
 
     static

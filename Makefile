@@ -167,7 +167,7 @@ $(ANDROID_DIR)/bin/$(APK_FILE): pentax.cpp pentax.h *.c $(ANDROID_SRC)/*.java $(
 	swig -c++ -java -package org.pk \
 		-outdir $(ANDROID_SRC) \
 		-o $(ANDROID_DIR)/jni/pentax_wrap.cpp pentax.h
-	NDK_PROJECT_PATH=$(ANDROID_DIR) $(NDK_BUILD)
+	NDK_PROJECT_PATH=$(ANDROID_DIR) NDK_DEBUG=1 $(NDK_BUILD)
 	ant -f $(ANDROID_ANT_FILE) debug
 
 apk: $(ANDROID_DIR)/bin/$(APK_FILE)
@@ -177,5 +177,7 @@ apk-debug-install: $(ANDROID_DIR)/bin/$(APK_FILE)
 
 apk-install: $(ANDROID_DIR)/bin/$(APK_FILE)
 	ant -f $(ANDROID_ANT_FILE) installr
+
+	
 
 	

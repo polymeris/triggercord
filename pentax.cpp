@@ -46,6 +46,11 @@ inline double log2(double x)
     return log(x) / log(2.);
 }
 
+float rationalAsFloat(pslr_rational_t r)
+{
+    return float(r.nom) / float(r.denom);
+}
+
 const Stop Stop::UNKNOWN = Stop(-1000);
 const Stop Stop::AUTO = Stop(-2000);
 const Stop Stop::HALF = Stop::fromHalfStops(1);
@@ -63,6 +68,11 @@ Stop Stop::fromHalfStops(int hs)
 Stop Stop::fromThirdStops(int ts)
 {
     return fromSixthStops(ts * 2);
+}
+
+Stop Stop::fromExposureSteps(int steps)
+{
+    return fromSixthStops(steps * 3);
 }
 
 Stop Stop::fromSixthStops(int ss)
@@ -128,6 +138,16 @@ const Stop Stop::operator*(int x) const
     return fromSixthStops(sixthStops * x);
 }
 
+bool Stop::operator!=(const Stop & other) const
+{
+    return this->sixthStops != other.sixthStops;
+}
+
+bool Stop::operator==(const Stop & other) const
+{
+    return this->sixthStops == other.sixthStops;
+}
+
 const Stop Stop::plus(const Stop & other) const
 {
     return *this + other;
@@ -173,6 +193,11 @@ int Stop::asInt() const
     return roundFloat(asExposureCompensation());
 }
 
+int Stop::asExposureSteps() const
+{
+    return sixthStops / 3.;
+}
+
 std::string Stop::getPrettyString() const
 {
     static const std::string SIXTHS_FRACTIONS[] =
@@ -194,10 +219,24 @@ std::string Stop::getSecondsString() const
     return ss.str();
 }
 
-std::string Stop::getOneOverString() const
+std::string Stop::getOneOverString(bool denomOnly) const
 {
     std::stringstream ss;
-    ss << "1/" << asShutterspeed();
+    ss << (denomOnly ? "" : "1/") << asShutterspeed();
+    return ss.str();
+}
+
+std::string Stop::getApertureString() const
+{
+    std::stringstream ss;
+    ss << asAperture();
+    return ss.str();
+}
+
+std::string Stop::getISOString() const
+{
+    std::stringstream ss;
+    ss << asISO();
     return ss.str();
 }
 
@@ -253,28 +292,43 @@ float asFloat(const pslr_rational_t & r)
     return float(r.nom) / float(r.denom);
 }
 
-void Camera::set(const Parameter & p, const Stop & s)
+void Camera::setStop(const Parameter & p, const Stop & s)
 {
-    LOCK_MUTEX;
-    requestedStopChanges[p] = s;
-    UNLOCK_MUTEX;
+    if (getStop(p) != s)
+    {
+	LOCK_MUTEX;
+	requestedStopChanges[p] = s;
+	UNLOCK_MUTEX;
+    }
 }
 
-void Camera::set(const Parameter & p, int i)
+void Camera::setString(const Parameter & p, const String & s)
 {
-    LOCK_MUTEX;
-    set(p, Stop(i));
-    UNLOCK_MUTEX;
+    if (p == "File Destination")
+    {
+	setFileDestination(s);
+	return;
+    }
+    
+    if (getString(p) != s)
+    {
+	LOCK_MUTEX;
+	requestedStringChanges[p] = s;
+	UNLOCK_MUTEX;
+    }
 }
 
-void Camera::set(const Parameter & p, const String & s)
+void Camera::setStopByIndex(const Parameter & p, int i)
 {
-    LOCK_MUTEX;
-    requestedStringChanges[p] = s;
-    UNLOCK_MUTEX;
+    setStop(p, getStopOption(p, i));
 }
 
-Stop Camera::get(const Parameter & p) const
+void Camera::setStringByIndex(const Parameter & p, int i)
+{
+    setString(p, getStringOption(p, i));
+}
+
+Stop Camera::getStop(const Parameter & p) const
 {
     LOCK_MUTEX;
     std::map<Parameter, Stop>::const_iterator it = currentStopValues.find(p);
@@ -294,26 +348,87 @@ std::string Camera::getString(const Parameter & p) const
     return it->second;
 }
 
-int Camera::getMinimum(const Parameter & p) const
+Stop Camera::getMinimum(const Parameter & p) const
 {
-    /* TODO: stub */
-    return 0;
+    if (p == "Shutterspeed")
+	return Stop::fromShuttertime(rationalAsFloat(theStatus.max_shutter_speed));
+    if (p == "Aperture")
+	return Stop::fromAperture(rationalAsFloat(theStatus.lens_min_aperture));
+    if (p == "ISO")
+	return Stop::fromISO(pslr_get_model_extended_iso_min(theHandle));
+    if (p == "Exposure Compensation")
+	return Stop::fromExposureCompensation(-5);
+    if (p == "Flash Exposure Compensation")
+	return -3;
+    if (p == "JPEG Sharpness" || p == "JPEG Contrast" ||p == "JPEG Saturation" || p == "JPEG Hue")
+	return -pslr_get_model_jpeg_property_levels(theHandle) / 2;
+    return Stop();
 }
 
-int Camera::getMaximum(const Parameter & p) const
+Stop Camera::getMaximum(const Parameter & p) const
 {
-    /* TODO: stub */
-    return 1;
+    if (p == "Shutterspeed")
+	return Stop::fromShuttertime(30).asExposureSteps();
+    if (p == "Aperture")
+	return Stop::fromAperture(rationalAsFloat(theStatus.lens_max_aperture));
+    if (p == "ISO")
+	return Stop::fromISO(pslr_get_model_extended_iso_max(theHandle));
+    if (p == "Exposure Compensation")
+	return Stop::fromExposureCompensation(5);
+    if (p == "Flash Exposure Compensation")
+	return 3;
+    if (p == "JPEG Sharpness" || p == "JPEG Contrast" ||p == "JPEG Saturation" || p == "JPEG Hue")
+	return pslr_get_model_jpeg_property_levels(theHandle) / 2;
+    return Stop();
 }
 
-const std::string Camera::STRING_VALUE_PARAMETERS[] =
+typedef int (*Setter)(pslr_handle_t, int);
+
+struct StringParameter
 {
-    "File Destination", "Flash Mode", "Drive Mode", "Autofocus Mode", "Autofocus Point",
-    "Metering Mode", "Color Space", "Exposure Mode", "JPEG Quality", "JPEG Resolution",
-    "JPEG Image Tone"
+    std::string name;
+    uint32_t * statusField;
+    Setter setter;
+    const char ** options;
 };
 
-const std::string Camera::STOP_VALUE_PARAMETERS[] =
+namespace xtern
+{
+    #include "pslr_strings.h"
+}
+
+const StringParameter STRING_PARAMETERS[] =
+{
+    {"File Destination", NULL, NULL, NULL },
+    {"Flash Mode", &theStatus.flash_mode, (Setter)&pslr_set_flash_mode, xtern::pslr_flash_mode_str},
+    {"Drive Mode", &theStatus.drive_mode, (Setter)&pslr_set_drive_mode, xtern::pslr_drive_mode_str},
+    {"Autofocus Mode", &theStatus.af_mode, (Setter)&pslr_set_af_mode, xtern::pslr_af_mode_str}
+    //~ "Metering Mode", "Color Space", "Exposure Mode", "JPEG Quality", "JPEG Resolution",
+    //~ "JPEG Image Tone"
+};
+
+int findStringParameter(std::string name)
+{
+    for (int i = 0; i < sizeof(STRING_PARAMETERS) / sizeof(StringParameter); i++)
+	if (name == STRING_PARAMETERS[i].name)
+	    return i;
+    return -1;
+}
+
+int getIndexOfOption(const char * arr[], const std::string & str)
+{
+    for (int i = 0; i < sizeof(arr) / sizeof(char *); i++)
+	if (std::string(arr[i]) == str)
+	    return i;
+    return -1;
+}
+
+std::string getOptionByIndex(const char * arr[], int idx)
+{
+    return idx >= sizeof(arr)/sizeof(char *) ? "?" : arr[idx];
+}
+
+const std::string STOP_VALUE_PARAMETERS[] =
 {
     "Shutterspeed", "Aperture", "ISO", "Exposure Compensation", "Flash Exposure Compensation",
     "JPEG Sharpness", "JPEG Contrast", "JPEG Saturation", "JPEG Hue"
@@ -323,62 +438,63 @@ const char* EXPOSURE_MODES[] = {
     "P", "Green", "?", "?", "?", "Tv", "Av", "?", "?", "M", "B", "Av", "M", "B", "TAv", "Sv", "X"
 };
 
-namespace xtern
+std::string Camera::getStringOption(const Parameter & p, int i) const
 {
-    #include "pslr_strings.h"
-}
-#define STRING_IN_ARRAY(arr, idx) ((idx >= sizeof(arr)/sizeof(char *))? "?" : arr[idx])
-
-int findInArray(const char * arr[], const std::string & str)
-{
-    for (int i = 0; i < sizeof(arr) / sizeof(char *); i++)
-	if (std::string(arr[i]) == str)
-	    return i;
-    return -1;
+    int j = findStringParameter(p);
+    if (j < 0)
+	return "?";
+    return getOptionByIndex(STRING_PARAMETERS[j].options, i);
 }
 
-std::string Camera::getStringOption(const Parameter & p, int i)
+Stop Camera::getStopOption(const Parameter & p, int i) const
 {
-    if (p == "Flash Mode")
-	return STRING_IN_ARRAY(xtern::pslr_flash_mode_str, i);
-    if (p == "Drive Mode")
-	return STRING_IN_ARRAY(xtern::pslr_drive_mode_str, i);
-    if (p == "Autofocus Mode")
-    if (p == "Metering Mode")
-	return STRING_IN_ARRAY(xtern::pslr_ae_metering_str, i);
-    if (p == "Color Space")
-	return STRING_IN_ARRAY(xtern::pslr_color_space_str, i);
-    if (p == "Exposure Mode")
-	return STRING_IN_ARRAY(EXPOSURE_MODES, i);
-    return "?";
+    if (p == "Shutterspeed" || p == "Aperture" || p == "ISO")
+	return (i == 0? Stop::AUTO : getMinimum(p) + Stop::fromExposureSteps(i - 1));
+    return getMinimum(p) + Stop(i);
+}
+
+int Camera::getStringCount(const Parameter & p) const
+{
+    int i = findStringParameter(p);
+    return sizeof(*STRING_PARAMETERS[i].options) / sizeof(char*);
+}
+
+int Camera::getStopCount(const Parameter & p) const
+{
+    return (getMaximum(p) - getMinimum(p)).asExposureSteps();
+}
+
+std::string Camera::getStopOptionAsString(const Parameter & p, int i) const
+{
+    Stop s = getStopOption(p, i);
+    if (s == Stop::AUTO)
+	return "AUTO";
+
+    if (p == "Shutterspeed")
+    {
+	if  (s.asShuttertime() < .3)
+	    return s.getOneOverString(true);
+	else
+	    return s.getSecondsString();
+
+    }
+
+    if (p == "Aperture")
+	return s.getApertureString();
+
+    if (p == "ISO")
+	return s.getISOString();
+
+    return s.getPrettyString();
 }
 
 std::string retrieveStringValue(const Camera::Parameter & p)
 {
-    //~ if (p == "File Destination")  return 
-    if (p == "Flash Mode")
-	return STRING_IN_ARRAY(xtern::pslr_flash_mode_str, theStatus.flash_mode);
-    if (p == "Drive Mode")
-	return STRING_IN_ARRAY(xtern::pslr_drive_mode_str, theStatus.drive_mode);
-    if (p == "Autofocus Mode")
-	//~ return STRING_IN_ARRAY(x::pslr_af_mode_str, theStatus.af_mode);
-    //~ if (p == "Autofocus Point")
-	//~ return STRING_IN_ARRAY(
-    if (p == "Metering Mode")
-	return STRING_IN_ARRAY(xtern::pslr_ae_metering_str, theStatus.ae_metering_mode);
-    if (p == "Color Space")
-	return STRING_IN_ARRAY(xtern::pslr_color_space_str, theStatus.color_space);
-    //~ if (p == "Image Format")
-	//~ return STRING_IN_ARRAY(IMAGE_FORMATS, theStatus.image_format);
-    //~ if (p == "Raw Format")
-	//~ return STRING_IN_ARRAY(pslr_raw_format_str, theSt
-    if (p == "Exposure Mode")
-	return STRING_IN_ARRAY(EXPOSURE_MODES, theStatus.exposure_mode);
-    //~ if (p == "Whitebalance Mode") return STRING_IN_ARRAY(pslr_white_balance_mode_str, theS
-    //~ if (p == "JPEG Quality")    return theStatus.jpeg_quality;
-    //~ if (p == "JPEG Resolution") return theStatus.jpeg_resolution;
-    //~ if (p == "JPEG Image Tone") return theStatus.jpeg_image_tone;
-    return "?";
+    int i = findStringParameter(p);
+    if (i < 0 || (!STRING_PARAMETERS[i].options) || (!STRING_PARAMETERS[i].statusField))
+	return "?";
+    int idx = *STRING_PARAMETERS[i].statusField;
+    return getOptionByIndex(STRING_PARAMETERS[i].options, idx);
 }
 
 Stop retrieveStopValue(const Camera::Parameter & p)
@@ -402,9 +518,9 @@ void Camera::updateValues()
 {
     LOCK_MUTEX;
     pslr_get_status(theHandle, &theStatus);
-    for (int i = 0; i < sizeof(STRING_VALUE_PARAMETERS) / sizeof(std::string); i++)
+    for (int i = 0; i < sizeof(STRING_PARAMETERS) / sizeof(StringParameter); i++)
     {
-	const std::string & param = STRING_VALUE_PARAMETERS[i];
+	const std::string & param = STRING_PARAMETERS[i].name;
 	currentStringValues[param] = retrieveStringValue(param);
     }
 
@@ -418,30 +534,20 @@ void Camera::updateValues()
 
 int sendChange(const Camera::Parameter & p, const std::string & s)
 {
-    int i = 0;
-    if (p == "Flash Mode")
-	return (i = findInArray(xtern::pslr_flash_mode_str, s) < 0 ? -2 :
-	    pslr_set_flash_mode(theHandle, (pslr_flash_mode_t)i));
-    if (p == "Drive Mode")
-	return (i = findInArray(xtern::pslr_drive_mode_str, s) < 0 ? -2 :
-	    pslr_set_drive_mode(theHandle, (pslr_drive_mode_t)i));
-    if (p == "Autofocus Mode")
-	return (i = findInArray(xtern::pslr_af_mode_str, s) < 0 ? -2 :
-	    pslr_set_af_mode(theHandle, (pslr_af_mode_t)i));
-    if (p == "Metering Mode")
-	return (i = findInArray(xtern::pslr_ae_metering_str, s) < 0 ? -2 :
-	    pslr_set_ae_metering_mode(theHandle, (pslr_ae_metering_t)i));
-    if (p == "Color Space")
-	return (i = findInArray(xtern::pslr_color_space_str, s) < 0 ? -2 :
-	    pslr_set_color_space(theHandle, (pslr_color_space_t)i));
-    if (p == "Exposure Mode")
-	return (i = findInArray(EXPOSURE_MODES, s) < 0 ? -2 :
-	    pslr_set_exposure_mode(theHandle, (pslr_exposure_mode_t)i));
+    DPRINT("Sending string change %s: %s\n", p.c_str(), s.c_str());
+    int i = findStringParameter(s);
+    if (i < 0 || (!STRING_PARAMETERS[i].options) || !(STRING_PARAMETERS[i].setter))
+	return -1;
+    int j = getIndexOfOption(STRING_PARAMETERS[i].options, s);
+    if (j < 0)
+	return -1;
+    STRING_PARAMETERS[i].setter(theHandle, j);
     return -1;
 }
 
 int sendChange(const Camera::Parameter & p, const Stop & s)
 {
+    DPRINT("Sending stop change %s: %s\n", p.c_str(), s.getPrettyString().c_str());
     if (p == "Shutterspeed")
 	return pslr_set_shutter(theHandle, stopAsRationalShuttertime(s));
     if (p == "Aperture")
@@ -466,13 +572,13 @@ void Camera::applyChanges()
     for (std::map<Parameter, String>::const_iterator it = requestedStringChanges.begin();
 	it != requestedStringChanges.end();
 	++it)
-	sendChange((*it).first, (*it).second);
+	sendChange(it->first, it->second);
     requestedStringChanges.clear();
     
     for (std::map<Parameter, Stop>::const_iterator it = requestedStopChanges.begin();
 	it != requestedStopChanges.end();
 	++it)
-	sendChange((*it).first, (*it).second);
+	sendChange(it->first, it->second);
     requestedStopChanges.clear();
     UNLOCK_MUTEX;
 }
@@ -514,10 +620,114 @@ void Camera::stopUpdating()
     UNLOCK_MUTEX;
 }
 
+bool Camera::setFileDestination(std::string path)
+{
+    if (access(path.c_str(), F_OK) != 0)
+	return false;
+    struct stat status;
+    stat(path.c_str(), &status);
+    if (!S_ISDIR(status.st_mode))
+	return false;
+    this->path = path;
+    return true;
+}
+
+std::string Camera::getFileDestination() const
+{
+    return path;
+}
+
+std::string Camera::getFileExtension()
+{
+    if (getString("Image Format") == "RAW")
+	return "dng";
+    return "jpg";
+}
+
+std::string Camera::getFilename()
+{
+    std::stringstream filename;
+    do
+    {
+	filename.str(std::string());
+	filename.clear();
+	imageNumber++;
+	filename << path << "/tc" << imageNumber << "." << getFileExtension();
+    } while (std::ifstream(filename.str().c_str())); // if it exists, find another name
+    return filename.str();
+}
+
+bool Camera::saveBuffer(const std::string & filename)
+{
+    std::ofstream output;
+    unsigned char buf[65536];
+    int bytes;
+
+    LOCK_MUTEX;
+    DPRINT("Writing to %s.", filename.c_str());
+    if (pslr_buffer_open(
+	theHandle, 0,
+	getString("Image Format") == "RAW" ?
+	PSLR_BUF_DNG : pslr_get_jpeg_buffer_type(theHandle, theStatus.jpeg_quality),
+	theStatus.jpeg_resolution)
+	!= PSLR_OK)
+    {
+	DPRINT("Failed to open camera buffer.");
+	UNLOCK_MUTEX;
+	return false;
+    }
+    UNLOCK_MUTEX;
+    
+    output.open(filename.c_str());
+
+    LOCK_MUTEX;
+    
+    DPRINT("Buffer length: %d.", pslr_buffer_get_size(theHandle));
+    do {
+        bytes = pslr_buffer_read(theHandle, buf, sizeof (buf));
+        output.write((char *)buf, bytes);
+    } while (bytes);
+    output.close();
+
+    pslr_buffer_close(theHandle);
+
+    UNLOCK_MUTEX;
+
+    lastFilename = filename;
+    return true;
+}
+
+void Camera::deleteBuffer()
+{
+    LOCK_MUTEX;
+    pslr_delete_buffer(theHandle, 0);
+    UNLOCK_MUTEX;
+}
+
+void Camera::focus()
+{
+    LOCK_MUTEX;
+    pslr_focus(theHandle);
+    UNLOCK_MUTEX;
+    DPRINT("Focused.");
+}
+
+std::string Camera::shoot()
+{
+    pslr_shutter(theHandle);
+    std::string fn = getFilename();
+    while (!saveBuffer(fn))
+	usleep(10000);
+    deleteBuffer();
+    DPRINT("Shot.");
+    return lastFilename;
+}
+
 Camera::Camera()
 {
     pslr_connect(theHandle);
-    //~ path = getpwuid(getuid())->pw_dir;
+    path = getpwuid(getuid())->pw_dir;
+    imageNumber = 0;
     updateValues();
 }
 

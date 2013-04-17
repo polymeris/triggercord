@@ -13,11 +13,13 @@
         android:layout_weight="3" 
         tools:layout="@layout/main" />
     
+<!--
     <fragment
         android:id="@+id/bufferFragment"
         android:name="org.pk.BufferFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
+-->
 
 </LinearLayout>
