@@ -390,6 +390,7 @@ struct StringParameter
     uint32_t * statusField;
     Setter setter;
     const char ** options;
+    int numOptions;
 };
 
 namespace xtern
@@ -397,35 +398,50 @@ namespace xtern
     #include "pslr_strings.h"
 }
 
+const char* EXPOSURE_MODES[] = {
+    "P", "Green", "?", "?", "?", "Tv", "Av", "?", "?", "M", "B", "Av", "M", "B", "TAv", "Sv", "X"
+};
+
 const StringParameter STRING_PARAMETERS[] =
 {
     {"File Destination", NULL, NULL, NULL },
-    {"Flash Mode", &theStatus.flash_mode, (Setter)&pslr_set_flash_mode, xtern::pslr_flash_mode_str},
-    {"Drive Mode", &theStatus.drive_mode, (Setter)&pslr_set_drive_mode, xtern::pslr_drive_mode_str},
-    {"Autofocus Mode", &theStatus.af_mode, (Setter)&pslr_set_af_mode, xtern::pslr_af_mode_str}
-    //~ "Metering Mode", "Color Space", "Exposure Mode", "JPEG Quality", "JPEG Resolution",
-    //~ "JPEG Image Tone"
+    {"Flash Mode", &theStatus.flash_mode, (Setter)&pslr_set_flash_mode,
+	xtern::pslr_flash_mode_str, PSLR_FLASH_MODE_MAX},
+    {"Drive Mode", &theStatus.drive_mode, (Setter)&pslr_set_drive_mode,
+	xtern::pslr_drive_mode_str, PSLR_DRIVE_MODE_MAX},
+    {"Autofocus Mode", &theStatus.af_mode, (Setter)&pslr_set_af_mode,
+	xtern::pslr_af_mode_str, PSLR_AF_MODE_MAX},
+    {"Metering Mode", &theStatus.ae_metering_mode, (Setter)&pslr_set_ae_metering_mode,
+	xtern::pslr_ae_metering_str, PSLR_AE_METERING_MAX},
+    {"Color Space", &theStatus.color_space, (Setter)&pslr_set_color_space,
+	xtern::pslr_color_space_str, PSLR_COLOR_SPACE_MAX},
+    {"Exposure Mode", &theStatus.exposure_mode, NULL,
+	EXPOSURE_MODES, PSLR_EXPOSURE_MODE_MAX}
 };
 
-int findStringParameter(std::string name)
+int findStringParameter(const std::string & name)
 {
-    for (int i = 0; i < sizeof(STRING_PARAMETERS) / sizeof(StringParameter); i++)
+    for (unsigned int i = 0; i < sizeof(STRING_PARAMETERS) / sizeof(StringParameter); i++)
+    {
 	if (name == STRING_PARAMETERS[i].name)
 	    return i;
+    }
     return -1;
 }
 
-int getIndexOfOption(const char * arr[], const std::string & str)
+int getIndexOfOption(StringParameter p, const std::string & str)
 {
-    for (int i = 0; i < sizeof(arr) / sizeof(char *); i++)
-	if (std::string(arr[i]) == str)
+    for (int i = 0; i < p.numOptions; i++)
+	if (std::string(p.options[i]) == str)
 	    return i;
     return -1;
 }
 
-std::string getOptionByIndex(const char * arr[], int idx)
+std::string getOptionByIndex(StringParameter p, int idx)
 {
-    return idx >= sizeof(arr)/sizeof(char *) ? "?" : arr[idx];
+    if (idx > p.numOptions)
+	return "?";
+    return p.options[idx];
 }
 
 const std::string STOP_VALUE_PARAMETERS[] =
@@ -434,16 +450,12 @@ const std::string STOP_VALUE_PARAMETERS[] =
     "JPEG Sharpness", "JPEG Contrast", "JPEG Saturation", "JPEG Hue"
 };
 
-const char* EXPOSURE_MODES[] = {
-    "P", "Green", "?", "?", "?", "Tv", "Av", "?", "?", "M", "B", "Av", "M", "B", "TAv", "Sv", "X"
-};
-
 std::string Camera::getStringOption(const Parameter & p, int i) const
 {
     int j = findStringParameter(p);
     if (j < 0)
 	return "?";
-    return getOptionByIndex(STRING_PARAMETERS[j].options, i);
+    return getOptionByIndex(STRING_PARAMETERS[j], i);
 }
 
 Stop Camera::getStopOption(const Parameter & p, int i) const
@@ -456,7 +468,9 @@ Stop Camera::getStopOption(const Parameter & p, int i) const
 int Camera::getStringCount(const Parameter & p) const
 {
     int i = findStringParameter(p);
-    return sizeof(*STRING_PARAMETERS[i].options) / sizeof(char*);
+    if (i < 0)
+	return 0;
+    return STRING_PARAMETERS[i].numOptions;
 }
 
 int Camera::getStopCount(const Parameter & p) const
@@ -494,7 +508,7 @@ std::string retrieveStringValue(const Camera::Parameter & p)
     if (i < 0 || (!STRING_PARAMETERS[i].options) || (!STRING_PARAMETERS[i].statusField))
 	return "?";
     int idx = *STRING_PARAMETERS[i].statusField;
-    return getOptionByIndex(STRING_PARAMETERS[i].options, idx);
+    return getOptionByIndex(STRING_PARAMETERS[i], idx);
 }
 
 Stop retrieveStopValue(const Camera::Parameter & p)
@@ -518,13 +532,13 @@ void Camera::updateValues()
 {
     LOCK_MUTEX;
     pslr_get_status(theHandle, &theStatus);
-    for (int i = 0; i < sizeof(STRING_PARAMETERS) / sizeof(StringParameter); i++)
+    for (unsigned int i = 0; i < sizeof(STRING_PARAMETERS) / sizeof(StringParameter); i++)
     {
 	const std::string & param = STRING_PARAMETERS[i].name;
 	currentStringValues[param] = retrieveStringValue(param);
     }
 
-    for (int i = 0; i < sizeof(STOP_VALUE_PARAMETERS) / sizeof(std::string); i++)
+    for (unsigned int i = 0; i < sizeof(STOP_VALUE_PARAMETERS) / sizeof(std::string); i++)
     {
 	const std::string & param = STOP_VALUE_PARAMETERS[i];
 	currentStopValues[param] = retrieveStopValue(param);
@@ -535,14 +549,14 @@ void Camera::updateValues()
 int sendChange(const Camera::Parameter & p, const std::string & s)
 {
     DPRINT("Sending string change %s: %s\n", p.c_str(), s.c_str());
-    int i = findStringParameter(s);
+    int i = findStringParameter(p);
     if (i < 0 || (!STRING_PARAMETERS[i].options) || !(STRING_PARAMETERS[i].setter))
 	return -1;
-    int j = getIndexOfOption(STRING_PARAMETERS[i].options, s);
+    int j = getIndexOfOption(STRING_PARAMETERS[i], s);
+    DPRINT("param option j = %i", j);
     if (j < 0)
 	return -1;
-    STRING_PARAMETERS[i].setter(theHandle, j);
-    return -1;
+    return STRING_PARAMETERS[i].setter(theHandle, j);
 }
 
 int sendChange(const Camera::Parameter & p, const Stop & s)
