@@ -13,7 +13,8 @@ import android.widget.*;
 public class Triggercord extends Activity implements
     AdapterView.OnItemSelectedListener,
     CompoundButton.OnCheckedChangeListener,
-    View.OnClickListener
+    View.OnClickListener,
+    SeekBar.OnSeekBarChangeListener
 {
     private static final String TAG = "Triggercord";
 
@@ -84,6 +85,8 @@ public class Triggercord extends Activity implements
                 ((CompoundButton)child).setOnCheckedChangeListener(this);
             else if (child instanceof Button)
                 ((Button)child).setOnClickListener(this);
+            else if (child instanceof SeekBar)
+                ((SeekBar)child).setOnSeekBarChangeListener(this);
             else if (child instanceof ViewGroup)
                 this.registerChildListeners((ViewGroup)child);
         }
@@ -104,10 +107,6 @@ public class Triggercord extends Activity implements
                 Log.d(TAG, "updated AV: " + av.getTag() + ", " +
                     ((BaseAdapter)av.getAdapter()).getCount() + " items");
             }
-            //~ else if (child instanceof CompoundButton)
-                //~ this.updateChild((CompoundButton)child);
-            //~ else if (child instanceof Button)
-                //~ this.updateChild((Button)child);
             else if (child instanceof ViewGroup)
                 this.updateChildren((ViewGroup)child);
         }
@@ -120,19 +119,6 @@ public class Triggercord extends Activity implements
         updateChildren((ViewGroup)findViewById(R.id.mainFragment));
         updateChildren((ViewGroup)findViewById(R.id.settingsFragment));
     }
-
-    //~ public void on(View view)
-    //~ {
-        //~ if (camera == null)
-            //~ return;
-        //~ String filename = camera.shoot();
-        //~ status.setText("Shot saved to ");
-        //~ status.append(filename);
-        //~ BitmapFactory.Options opts = new BitmapFactory.Options();
-        //~ opts.inSampleSize = 4;
-        //~ currentImage = BitmapFactory.decodeFile(filename, opts);
-        //~ photo.setImageBitmap(currentImage);
-    //~ }
 
     public void onClick(View parent)
     {
@@ -186,10 +172,30 @@ public class Triggercord extends Activity implements
         {}
     }
 
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+    {
+        if (camera == null || !fromUser)
+            return;
+        String[] p = ((String)seekBar.getTag()).split(":");
+        if (p.length < 2 || p[0] == "String")
+            return;
+        camera.setStopByIndex(p[1], progress);
+    }
+    
+    public void onStartTrackingTouch(SeekBar seekBar)
+    {
+    }
+
+    public void onStopTrackingTouch(SeekBar seekBar)
+    {
+    }
+
     public boolean loadCamera()
     {
         if (camera != null)
             return true;
+
+        Log.v(TAG, "Trying to load camera.");
 
         camera = pentax.camera();
         if (camera == null)
@@ -197,9 +203,13 @@ public class Triggercord extends Activity implements
             status.setText("No camera found");
             return false;
         }
+
+        Log.v(TAG, "Found camera.");
         
         status.setText("Found camera: ");
         status.append(camera.getString("Camera Model"));
+
+        Log.v(TAG, "Configuring file destination.");
         java.io.File picDir;
         picDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         picDir.mkdirs();
@@ -212,6 +222,7 @@ public class Triggercord extends Activity implements
             status.setText("Can't access storage.");
         camera.setFileDestination(picDir.getAbsolutePath());
 
+        Log.v(TAG, "Starting to update camera.");
         camera.startUpdating();
         
         registerChildListeners((ViewGroup)findViewById(R.id.mainFragment));

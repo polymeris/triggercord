@@ -8,7 +8,23 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" >
+        <Spinner
+            android:id="@+id/DriveModeSpinner"
+            android:tag="Drive Mode"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        <Spinner
+            android:tag="Autofocus Mode"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+    </TableRow>
 
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
         <Spinner
             android:id="@+id/MeteringModeSpinner"
             android:tag="Metering Mode"
@@ -17,92 +33,215 @@
             android:layout_weight="1"
             android:contentDescription="@string/meteringMode"
             />
-
-        <Spinner
-            android:id="@+id/DriveModeSpinner"
-            android:tag="Drive Mode"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-
-    </TableRow>
-
-    <TableRow
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" >
-
-<!--
-        <Spinner
-            android:id="@+id/AutoFocusPointsSpinner"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
--->
-
         <Spinner
             android:id="@+id/FlashModeSpinner"
             android:tag="Flash Mode"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
-
     </TableRow>
-
-<!--
     <TableRow
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" >
-
+        android:layout_width="match_parent">
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:layout_marginLeft="4dp"
-            android:text="@string/quality"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
-        <RatingBar
-            android:id="@+id/JpegQualitySpinner"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:numStars="3"
-            android:rating="3"
-            android:stepSize="1" />
-
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/flashEC" />
+        <SeekBar
+            android:tag="Stop:Flash Exposure Compensation"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            />
     </TableRow>
--->
 
-    <TableRow
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" >
-
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#323232"
+        android:layout_margin="8dip"/>
+        
+    <TableRow>
         <ToggleButton
             android:id="@+id/RawToggle"
-            android:tag="Raw"
+            android:tag="String:Image Format"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="@string/raw"
             android:textOff="@string/jpegOnly"
             android:textOn="@string/rawOnly" />
-
         <Spinner
             android:id="@+id/ResolutionSpinner"
-            android:tag="JPEG Resolution"
+            android:tag="String:JPEG Resolution"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+    </TableRow>
+    <TableRow>
+        <Spinner
+            android:tag="String:Image Tone"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
     </TableRow>
 
-<!--
-    <Spinner
-        android:id="@+id/ImageModeSpinner"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
--->
+    <TableRow
+        android:layout_width="match_parent">
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/jpegQuality" />
+        <SeekBar
+            android:tag="Stop:JPEG Quality"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            />
+    </TableRow>
+
+    <TableRow>
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/jpegSharpness" />
+        <SeekBar
+            android:tag="Stop:JPEG Sharpness"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            />
+    </TableRow>
+
+    <TableRow>
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/jpegContrast" />
+        <SeekBar
+            android:tag="Stop:JPEG Contrast"
+            android:layout_height="wrap_content"
+            android:layout_weight="3" />
+    </TableRow>
+
+    <TableRow>
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/jpegSaturation" />
+        <SeekBar
+            android:tag="Stop:JPEG Saturation"
+            android:layout_height="wrap_content"
+            android:layout_weight="3" />
+    </TableRow>
+
+    <TableRow>
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/jpegHue" />
+        <SeekBar
+            android:tag="Stop:JPEG Hue"
+            android:layout_height="wrap_content"
+            android:layout_weight="3" />
+    </TableRow>
+
+    <View   
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#323232"
+        android:layout_margin="8dip"/>
+
+    <TableRow>
+        <Spinner
+            android:tag="String:Whitebalance Mode"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        <Spinner
+            android:tag="String:Color Space"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+    </TableRow>
+
+    <TableRow>
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/mWBAdjustment" />
+        <SeekBar
+            android:tag="Stop:Whitebalance Adjustment Magenta/Green"
+            android:layout_height="wrap_content"
+            android:layout_weight="4"
+            />
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:text="@string/gWBAdjustment" />
+    </TableRow>
+
+    <TableRow>
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:text="@string/bWBAdjustment" />
+        <SeekBar
+            android:tag="Stop:Whitebalance Adjustment Blue/Amber"
+            android:layout_height="wrap_content"
+            android:layout_weight="4"
+            />
+        <TextView
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:text="@string/aWBAdjustment" />
+    </TableRow>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#323232"
+        android:layout_margin="8dip"/>
+
+    <TableRow>
+        <ToggleButton
+            android:id="@+id/focusLinkToggle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" 
+            android:textOn="@string/focusLinked"
+            android:textOff="@string/focusNotLinked"
+            />
+        <Spinner
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" 
+            android:tag="String:EV Step"
+            />
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" 
+            android:layout_gravity="center"
+            android:tag="String:Lens Model"
+            android:text="Unknown Lens" />
+    </TableRow>
 
 </TableLayout>

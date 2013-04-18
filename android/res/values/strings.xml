@@ -22,4 +22,16 @@
     <string name="jpegOnly">JPEG only</string>
     <string name="buffer">Buffer</string>
     <string name="quality">Quality</string>
+    <string name="jpegSharpness">Sharpness</string>
+    <string name="jpegContrast">Contrast</string>
+    <string name="jpegSaturation">Saturation</string>
+    <string name="jpegHue">Hue</string>
+    <string name="jpegQuality">Quality</string>
+    <string name="mWBAdjustment">Magenta</string>
+    <string name="gWBAdjustment">Green</string>
+    <string name="bWBAdjustment">Blue</string>
+    <string name="aWBAdjustment">Amber</string>
+    <string name="flashEC">Flash Exposure\nCompensation</string>
+    <string name="focusLinked">Focus on Trigger</string>
+    <string name="focusNotLinked">Independant Focus</string>
 </resources>

@@ -588,7 +588,9 @@ void Camera::applyChanges()
 	++it)
 	sendChange(it->first, it->second);
     requestedStringChanges.clear();
-    
+    UNLOCK_MUTEX;
+
+    LOCK_MUTEX;
     for (std::map<Parameter, Stop>::const_iterator it = requestedStopChanges.begin();
 	it != requestedStopChanges.end();
 	++it)
@@ -690,21 +692,17 @@ bool Camera::saveBuffer(const std::string & filename)
 	UNLOCK_MUTEX;
 	return false;
     }
-    UNLOCK_MUTEX;
+    DPRINT("Buffer length: %d.", pslr_buffer_get_size(theHandle));
     
     output.open(filename.c_str());
-
-    LOCK_MUTEX;
     
-    DPRINT("Buffer length: %d.", pslr_buffer_get_size(theHandle));
     do {
         bytes = pslr_buffer_read(theHandle, buf, sizeof (buf));
         output.write((char *)buf, bytes);
     } while (bytes);
-    output.close();
-
     pslr_buffer_close(theHandle);
 
+    output.close();
     UNLOCK_MUTEX;
 
     lastFilename = filename;
@@ -728,7 +726,11 @@ void Camera::focus()
 
 std::string Camera::shoot()
 {
-    pslr_shutter(theHandle);
+    if (pslr_shutter(theHandle) != PSLR_OK)
+    {
+	DPRINT("Did not shoot.");
+	return "";
+    };
     std::string fn = getFilename();
     while (!saveBuffer(fn))
 	usleep(10000);

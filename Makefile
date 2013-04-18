@@ -14,6 +14,14 @@ PY_LDFLAGS = $(LIN_LDFLAGS) `pkg-config --libs python-2.7`
 ANDROID_DIR = android
 ANDROID_SRC = $(ANDROID_DIR)/src/org/pk/
 ANDROID_ANT_FILE = $(ANDROID_DIR)/build.xml
+ANDROID_RES_FILES = \
+	$(ANDROID_DIR)/res/layout/triggercord.xml \
+	$(ANDROID_DIR)/res/layout/main.xml \
+	$(ANDROID_DIR)/res/layout/settings.xml \
+	$(ANDROID_DIR)/res/layout/buffer.xml \
+	$(ANDROID_DIR)/res/layout-land-hdpi/triggercord.xml \
+	$(ANDROID_DIR)/res/values/strings.xml
+	
 APK_FILE = Triggercord-debug.apk
 NDK_BUILD = ndk-build
 
@@ -163,7 +171,8 @@ python-bindings: $(OBJS)
 $(ANDROID_DIR)/build.xml:
 	android update project --path $(ANDROID_DIR) --target android-12
 
-$(ANDROID_DIR)/bin/$(APK_FILE): pentax.cpp pentax.h *.c $(ANDROID_SRC)/*.java $(ANDROID_DIR)/build.xml
+$(ANDROID_DIR)/bin/$(APK_FILE): \
+		pentax.cpp pentax.h *.c $(ANDROID_SRC)/*.java $(ANDROID_DIR)/build.xml $(ANDROID_RES_FILES)
 	swig -c++ -java -package org.pk \
 		-outdir $(ANDROID_SRC) \
 		-o $(ANDROID_DIR)/jni/pentax_wrap.cpp pentax.h
