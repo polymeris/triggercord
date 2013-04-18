@@ -3,10 +3,13 @@ package org.pk;
 import java.util.Timer;
 import java.util.TimerTask;
 import android.app.Activity;
+import android.content.res.Resources;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.graphics.*;
+import android.graphics.drawable.Drawable;
 import android.view.*;
 import android.widget.*;
 
@@ -66,6 +69,13 @@ public class Triggercord extends Activity implements
         super.onPause();
         if (camera != null)
             camera.stopUpdating();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.triggercord, menu);
+        return true;
     }
 
     protected void registerChildListeners(ViewGroup vg)
@@ -141,9 +151,6 @@ public class Triggercord extends Activity implements
 
         if (parent.getId() == R.id.focusButton)
             camera.focus();
-
-        if (parent.getId() == R.id.settingsButton)
-        {}
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int pos, long id)
@@ -284,15 +291,34 @@ public class Triggercord extends Activity implements
 
         public View getView(int position, View convertView, ViewGroup parent)
         {
-            String item = (String)getItem(position);
-            if (convertView != null && convertView instanceof TextView)
+            Context context = parent.getContext();
+            String item = (String)getItem(position); 
+
+            String resStr = parameter + " " + item;
+            resStr = "drawable/" + resStr.replaceAll("-", "_").replaceAll(" ", "_").toLowerCase();
+            String pkg = context.getPackageName();
+            int id = context.getResources().getIdentifier(resStr, "drawable", pkg);
+            if (id != 0)
             {
-                ((TextView)convertView).setText(item);
-                return convertView;
+                ImageView view;
+                if (convertView != null && convertView instanceof ImageView)
+                    view = (ImageView)convertView;
+                else
+                    view = new ImageView(context);
+                view.setLayoutParams(new GridView.LayoutParams(
+                    GridView.LayoutParams.WRAP_CONTENT, GridView.LayoutParams.WRAP_CONTENT));
+                view.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                view.setPadding(0, 0, 0, 0);
+                view.setImageResource(id);
+                return view;
             }
-            TextView newView = new TextView(parent.getContext());
-            newView.setText(item);
-            return newView;
+            TextView view;
+            if (convertView != null && convertView instanceof TextView)
+                view = (TextView)convertView;
+            else
+                view = new TextView(context);
+            view.setText(item);
+            return view;
         }
 
         public void itemSelected(int pos)

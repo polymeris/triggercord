@@ -34,4 +34,5 @@
     <string name="flashEC">Flash Exposure\nCompensation</string>
     <string name="focusLinked">Focus on Trigger</string>
     <string name="focusNotLinked">Independant Focus</string>
+    <string name="settingsTitle">Settings</string>
 </resources>

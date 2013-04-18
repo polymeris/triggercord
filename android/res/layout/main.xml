@@ -93,15 +93,6 @@
       <Button
             android:id="@+id/greenButton"
             android:tag="Action:Green"
-            android:color="#008000"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_alignParentBottom ="true"
-            android:layout_weight="4"
-        />
-
-      <Button
-            android:id="@+id/settingsButton"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_alignParentBottom ="true"

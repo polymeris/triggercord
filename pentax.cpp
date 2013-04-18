@@ -16,19 +16,20 @@ extern "C"
 #include <pwd.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 const static int MIN_UPDATE_INTERVAL = 2; // seconds
 
 static char *theDevice = NULL;
 pthread_t theUpdateThread;
-pthread_mutex_t theMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t theMutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER;;
 bool theUpdateThreadRunning, theUpdateThreadExitFlag;
 static pslr_handle_t theHandle;
 static pslr_status theStatus;
 static Camera * theCamera = NULL;
 
-#define LOCK_MUTEX 	pthread_mutex_lock(&theMutex)
-#define UNLOCK_MUTEX	pthread_mutex_unlock(&theMutex);
+#define LOCK_MUTEX 	if (pthread_mutex_lock(&theMutex) == EDEADLK) DPRINT("Deadlock");
+#define UNLOCK_MUTEX	if (pthread_mutex_unlock(&theMutex) == EPERM) DPRINT("Do not own Mutex lock");
 
 inline float roundToSignificantDigits(float f, int d)
 {
@@ -342,9 +343,12 @@ std::string Camera::getString(const Parameter & p) const
 {
     LOCK_MUTEX;
     std::map<Parameter, std::string>::const_iterator it = currentStringValues.find(p);
-    UNLOCK_MUTEX;
     if (it == currentStringValues.end())
+    {
+	UNLOCK_MUTEX;
 	return "?";
+    }
+    UNLOCK_MUTEX;
     return it->second;
 }
 
@@ -537,7 +541,9 @@ void Camera::updateValues()
 	const std::string & param = STRING_PARAMETERS[i].name;
 	currentStringValues[param] = retrieveStringValue(param);
     }
+    UNLOCK_MUTEX;
 
+    LOCK_MUTEX;
     for (unsigned int i = 0; i < sizeof(STOP_VALUE_PARAMETERS) / sizeof(std::string); i++)
     {
 	const std::string & param = STOP_VALUE_PARAMETERS[i];
@@ -553,7 +559,6 @@ int sendChange(const Camera::Parameter & p, const std::string & s)
     if (i < 0 || (!STRING_PARAMETERS[i].options) || !(STRING_PARAMETERS[i].setter))
 	return -1;
     int j = getIndexOfOption(STRING_PARAMETERS[i], s);
-    DPRINT("param option j = %i", j);
     if (j < 0)
 	return -1;
     return STRING_PARAMETERS[i].setter(theHandle, j);
@@ -644,7 +649,9 @@ bool Camera::setFileDestination(std::string path)
     stat(path.c_str(), &status);
     if (!S_ISDIR(status.st_mode))
 	return false;
+    LOCK_MUTEX;
     this->path = path;
+    UNLOCK_MUTEX;
     return true;
 }
 
@@ -679,11 +686,13 @@ bool Camera::saveBuffer(const std::string & filename)
     unsigned char buf[65536];
     int bytes;
 
+    std::string imgFormat = getString("Image Format");
+
     LOCK_MUTEX;
     DPRINT("Writing to %s.", filename.c_str());
     if (pslr_buffer_open(
 	theHandle, 0,
-	getString("Image Format") == "RAW" ?
+	imgFormat == "RAW" ?
 	PSLR_BUF_DNG : pslr_get_jpeg_buffer_type(theHandle, theStatus.jpeg_quality),
 	theStatus.jpeg_resolution)
 	!= PSLR_OK)
