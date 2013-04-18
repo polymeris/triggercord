@@ -10,8 +10,10 @@ LOCAL_SRC_FILES := 	\
 	../../pslr_enum.c \
 	../../pslr_lens.c \
 	../../pslr_model.c \
-	../../pslr_scsi.c 
-LOCAL_CPPFLAGS  := -DANDROID -frtti -I.. -Istlport -g
+	../../pslr_scsi.c
+GIT_HASH := `git log --pretty=format:'%h' -n 1`
+DEFINES := -DANDROID -DVERSION=\"$(VERSION)\" -DSUB_VERSION=\"$(GIT_HASH)\"
+LOCAL_CPPFLAGS  := $(DEFINES) -frtti -I.. -Istlport -g 
 LOCAL_LDLIBS	:= -llog -lstdc++
 
 include $(BUILD_SHARED_LIBRARY)

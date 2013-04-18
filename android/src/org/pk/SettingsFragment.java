@@ -17,10 +17,4 @@ public class SettingsFragment extends Fragment {
     	setHasOptionsMenu(true);
         return inflater.inflate(R.layout.settings, container, false);
     }
-    
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-    	menu.add("Show");
-    	super.onCreateOptionsMenu(menu, inflater);
-    }
 }

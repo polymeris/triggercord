@@ -2,8 +2,9 @@ package org.pk;
 
 import java.util.Timer;
 import java.util.TimerTask;
-import android.app.Activity;
+import android.app.*;
 import android.content.res.Resources;
+import android.content.pm.*;
 import android.content.*;
 import android.os.Bundle;
 import android.os.Environment;
@@ -84,6 +85,31 @@ public class Triggercord extends Activity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId())
         {
+            case R.id.infoMenuItem:
+                String message = new String();
+                try
+                {
+                    PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+                    message += "Triggercord version: " + pInfo.versionName + "\n";
+                    message += "Camera API Version: " + camera.getAPI_VERSION() + "\n";
+                }
+                catch (PackageManager.NameNotFoundException ex)
+                {
+                    message += "Unknown application version\n";
+                }
+
+                if (camera != null)
+                    message += "\nCamera status\n" +
+                        camera.getStatusInformation().replaceAll(" +", " ").replaceAll(" :", ":");
+                else
+                    message += "\nNo camera has been detected.";
+                
+                AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+                alertDialog.setTitle("Status Information");
+                alertDialog.setMessage(message);
+                alertDialog.setIcon(R.drawable.about);
+                alertDialog.show();
+                return true;
             case R.id.helpMenuItem:
                 String path = getResources().getString(R.string.helpPath);
                 Intent viewHelp = new Intent(Intent.ACTION_VIEW, Uri.parse(path));

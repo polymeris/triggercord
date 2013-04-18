@@ -98,6 +98,7 @@ public:
 
     bool setFileDestination(std::string);
     std::string getFileDestination() const;
+    std::string getStatusInformation() const;
     std::string getFilename();
 
     void focus();
@@ -111,6 +112,9 @@ protected:
     std::string path;
     std::string lastFilename;
     int imageNumber;
+
+public:
+    static const std::string API_VERSION;
 
 public:
     ~Camera();

@@ -22,15 +22,25 @@ const static int MIN_UPDATE_INTERVAL = 2; // seconds
 
 static char *theDevice = NULL;
 pthread_t theUpdateThread;
-//~ pthread_mutex_t theMutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER;
-pthread_mutex_t theMutex = PTHREAD_MUTEX_INITIALIZER;
 bool theUpdateThreadRunning, theUpdateThreadExitFlag;
 static pslr_handle_t theHandle;
 static pslr_status theStatus;
 static Camera * theCamera = NULL;
 
-#define LOCK_MUTEX 	if (pthread_mutex_lock(&theMutex) == EDEADLK) DPRINT("Deadlock");
-#define UNLOCK_MUTEX	if (pthread_mutex_unlock(&theMutex) == EPERM) DPRINT("Do not own Mutex lock");
+#ifdef ANDROID
+    pthread_mutex_t theMutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER;
+    #define LOCK_MUTEX 	if (pthread_mutex_lock(&theMutex) == EDEADLK) DPRINT("Deadlock");
+    #define UNLOCK_MUTEX \
+	if (pthread_mutex_unlock(&theMutex) == EPERM) DPRINT("Do not own Mutex lock");
+
+    const std::string Camera::API_VERSION = std::string(VERSION) + "-" + SUB_VERSION;
+#else
+    pthread_mutex_t theMutex = PTHREAD_MUTEX_INITIALIZER;
+    #define LOCK_MUTEX 	pthread_mutex_lock(&theMutex);
+    #define UNLOCK_MUTEX pthread_mutex_unlock(&theMutex);
+
+    const std::string Camera::API_VERSION = std::string(VERSION) + "-test";
+#endif
 
 inline float roundToSignificantDigits(float f, int d)
 {
@@ -772,6 +782,11 @@ std::string Camera::shoot()
     deleteBuffer();
     DPRINT("Shot.");
     return lastFilename;
+}
+
+std::string Camera::getStatusInformation() const
+{
+    return collect_status_info(theHandle, theStatus);
 }
 
 Camera::Camera()

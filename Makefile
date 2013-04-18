@@ -18,9 +18,9 @@ ANDROID_RES_FILES = \
 	$(ANDROID_DIR)/res/layout/triggercord.xml \
 	$(ANDROID_DIR)/res/layout/main.xml \
 	$(ANDROID_DIR)/res/layout/settings.xml \
-	$(ANDROID_DIR)/res/layout/buffer.xml \
 	$(ANDROID_DIR)/res/layout-land-hdpi/triggercord.xml \
-	$(ANDROID_DIR)/res/values/strings.xml
+	$(ANDROID_DIR)/res/values/strings.xml \
+	$(ANDROID_DIR)/res/menu/triggercord.xml
 	
 APK_FILE = Triggercord-debug.apk
 NDK_BUILD = ndk-build
@@ -176,7 +176,7 @@ $(ANDROID_DIR)/bin/$(APK_FILE): \
 	swig -c++ -java -package org.pk \
 		-outdir $(ANDROID_SRC) \
 		-o $(ANDROID_DIR)/jni/pentax_wrap.cpp pentax.h
-	NDK_PROJECT_PATH=$(ANDROID_DIR) NDK_DEBUG=1 $(NDK_BUILD)
+	VERSION=$(VERSION) NDK_PROJECT_PATH=$(ANDROID_DIR) NDK_DEBUG=1 $(NDK_BUILD)
 	ant -f $(ANDROID_ANT_FILE) debug
 
 apk: $(ANDROID_DIR)/bin/$(APK_FILE)
