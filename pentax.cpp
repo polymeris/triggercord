@@ -409,12 +409,13 @@ const char* EXPOSURE_MODES[] = {
 const StringParameter STRING_PARAMETERS[] =
 {
     {"File Destination", NULL, NULL, NULL },
-    {"Flash Mode", &theStatus.flash_mode, (Setter)&pslr_set_flash_mode,
-	xtern::pslr_flash_mode_str, PSLR_FLASH_MODE_MAX},
+    //~ {"Flash Mode", &theStatus.flash_mode, (Setter)&pslr_set_flash_mode,
+	//~ xtern::pslr_flash_mode_str, PSLR_FLASH_MODE_MAX}, 
     {"Drive Mode", &theStatus.drive_mode, (Setter)&pslr_set_drive_mode,
 	xtern::pslr_drive_mode_str, PSLR_DRIVE_MODE_MAX},
-    {"Autofocus Mode", &theStatus.af_mode, (Setter)&pslr_set_af_mode,
-	xtern::pslr_af_mode_str, PSLR_AF_MODE_MAX},
+    //~ {"Autofocus Mode", &theStatus.af_mode, (Setter)&pslr_set_af_mode,
+	//~ xtern::pslr_af_mode_str, PSLR_AF_MODE_MAX}, //THIS CAUSES A BUG, MAYBE BECAUSE MF MUST
+	// BE SET PHYSICALLY
     {"Metering Mode", &theStatus.ae_metering_mode, (Setter)&pslr_set_ae_metering_mode,
 	xtern::pslr_ae_metering_str, PSLR_AE_METERING_MAX},
     {"Color Space", &theStatus.color_space, (Setter)&pslr_set_color_space,
@@ -562,6 +563,7 @@ int sendChange(const Camera::Parameter & p, const std::string & s)
     if (j < 0)
 	return -1;
     return STRING_PARAMETERS[i].setter(theHandle, j);
+    return 0;
 }
 
 int sendChange(const Camera::Parameter & p, const Stop & s)
