@@ -166,7 +166,7 @@ win: clean pktriggercord_commandline.html
 python-bindings: $(OBJS)
 	mkdir -p python
 	swig -c++ -python -o python/pentax_wrap.cpp pentax.h
-	$(CXX) -fPIC $(OBJS) python/pentax_wrap.cpp pentax.cpp $(PY_CFLAGS) $(PY_LDFLAGS) --shared -o python/_pentax.so
+	$(CXX) -fPIC $(OBJS) -DVERSION=\"$(VERSION)\" python/pentax_wrap.cpp pentax.cpp $(PY_CFLAGS) $(PY_LDFLAGS) --shared -o python/_pentax.so
 
 $(ANDROID_DIR)/build.xml:
 	android update project --path $(ANDROID_DIR) --target android-12

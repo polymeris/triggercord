@@ -25,6 +25,7 @@ pthread_t theUpdateThread;
 bool theUpdateThreadRunning, theUpdateThreadExitFlag;
 static pslr_handle_t theHandle;
 static pslr_status theStatus;
+bool apertureIsAuto, isoIsAuto, shutterIsAuto;
 static Camera * theCamera = NULL;
 
 #ifdef ANDROID
@@ -192,6 +193,8 @@ float Stop::asShutterspeed() const
 
 int Stop::asISO() const
 {
+    if (*this == AUTO)
+	return 0;
     return (int)roundToSignificantDigits(100. * powf(2., (float)sixthStops / 6.), 2);
 }
 
@@ -366,7 +369,7 @@ std::string Camera::getString(const Parameter & p) const
 Stop Camera::getMinimum(const Parameter & p) const
 {
     if (p == "Shutterspeed")
-	return Stop::fromShuttertime(rationalAsFloat(theStatus.max_shutter_speed));
+	return Stop::fromShuttertime(30);
     if (p == "Aperture")
 	return Stop::fromAperture(rationalAsFloat(theStatus.lens_min_aperture));
     if (p == "ISO")
@@ -383,7 +386,7 @@ Stop Camera::getMinimum(const Parameter & p) const
 Stop Camera::getMaximum(const Parameter & p) const
 {
     if (p == "Shutterspeed")
-	return Stop::fromShuttertime(30).asExposureSteps();
+	return Stop::fromShuttertime(rationalAsFloat(theStatus.max_shutter_speed));
     if (p == "Aperture")
 	return Stop::fromAperture(rationalAsFloat(theStatus.lens_max_aperture));
     if (p == "ISO")
@@ -416,6 +419,27 @@ namespace xtern
 const char * EXPOSURE_MODES[] = {
     "P", "Green", "?", "?", "?", "Tv", "Av", "?", "?", "M", "B", "Av", "M", "B", "TAv", "Sv", "X"
 };
+
+pslr_exposure_mode_t getExposureMode(bool aA, bool aS, bool aI)
+{
+    if ((!aA) && (!aS) && (!aI))
+	return PSLR_EXPOSURE_MODE_M;
+    if ((!aA) && (!aS))
+	return PSLR_EXPOSURE_MODE_TAV;
+    if ((!aA))
+	return PSLR_EXPOSURE_MODE_AV;
+    if (( aA) && (!aS))
+	return PSLR_EXPOSURE_MODE_TV;
+    if (( aA) && ( aS) && (!aI))
+	return PSLR_EXPOSURE_MODE_SV;
+    return PSLR_EXPOSURE_MODE_P;
+}
+
+void updateExposureMode()
+{
+    pslr_exposure_mode_t m = getExposureMode(apertureIsAuto, shutterIsAuto, isoIsAuto);
+    pslr_set_exposure_mode(theHandle, m);
+}
 
 const char * FLASH_MODES[] = {
     "Auto",
@@ -552,7 +576,7 @@ std::string retrieveStringValue(const Camera::Parameter & p)
 
 Stop retrieveStopValue(const Camera::Parameter & p)
 {
-    if (p == "Shutterspeed")  return Stop::fromShutterspeed(1. / asFloat(theStatus.current_aperture));
+    if (p == "Shutterspeed") return Stop::fromShuttertime(asFloat(theStatus.current_shutter_speed));
     if (p == "Aperture")     return Stop::fromAperture(asFloat(theStatus.current_aperture));
     if (p == "ISO")          return Stop::fromISO(theStatus.fixed_iso);
     if (p == "Exposure Compensation") return Stop::fromExposureCompensation(asFloat(theStatus.ec));
@@ -600,15 +624,36 @@ int sendChange(const Camera::Parameter & p, const std::string & s)
     return 0;
 }
 
+bool updateExposureIfNecessary(bool & b, const Stop & s)
+{
+    if(b != (s == Stop::AUTO))
+    {
+	b = (s == Stop::AUTO);
+	updateExposureMode();
+    }
+    return b;
+}
+
 int sendChange(const Camera::Parameter & p, const Stop & s)
 {
     DPRINT("Sending stop change %s: %s\n", p.c_str(), s.getPrettyString().c_str());
     if (p == "Shutterspeed")
+    {
+	if(updateExposureIfNecessary(shutterIsAuto, s))
+	    return 0;
 	return pslr_set_shutter(theHandle, stopAsRationalShuttertime(s));
+    }
     if (p == "Aperture")
+    {
+	if(updateExposureIfNecessary(apertureIsAuto, s))
+	    return 0;
 	return pslr_set_aperture(theHandle, stopAsRationalAperture(s));
+    }
     if (p == "ISO")
+    {
+	updateExposureIfNecessary(isoIsAuto, s);
 	return pslr_set_iso(theHandle, s.asISO(), s.asISO(), s.asISO());
+    }
     if (p == "Exposure Compensation")
 	return pslr_set_ec(theHandle, stopAsRationalExposureCompensation(s));
     if (p == "Flash Exposure Compensation")

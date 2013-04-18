@@ -13,7 +13,7 @@
 
         <TextView
             android:id="@+id/modeText"
-            android:tag="String:Metering Mode"
+            android:tag="String:Exposure Mode"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

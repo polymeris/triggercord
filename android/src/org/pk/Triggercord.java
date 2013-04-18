@@ -165,8 +165,20 @@ public class Triggercord extends Activity implements
             {
                 AdapterView av = (AdapterView)child;
                 ((BaseAdapter)av.getAdapter()).notifyDataSetChanged();
-                Log.d(TAG, "updated AV: " + av.getTag() + ", " +
+                Log.d(TAG, "updated AdapterV: " + av.getTag() + ", " +
                     ((BaseAdapter)av.getAdapter()).getCount() + " items");
+            }
+            else if (child instanceof TextView)
+            {
+                TextView text = (TextView)child;
+                String param = (String)text.getTag();
+                if (param == null)
+                    continue;
+                String[] p = param.split(":");
+                if (p.length < 2)
+                    text.setText(camera.getString(p[0]));
+                else if (p[0] == "String")
+                    text.setText(camera.getString(p[1]));
             }
             else if (child instanceof ViewGroup)
                 this.updateChildren((ViewGroup)child);
