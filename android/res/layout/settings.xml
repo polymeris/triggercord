@@ -19,17 +19,6 @@
             android:layout_height="match_parent"
             android:layout_weight="1" />
         <Spinner
-            android:tag="Autofocus Mode"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-    </TableRow>
-
-    <TableRow
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" >
-        <Spinner
             android:id="@+id/MeteringModeSpinner"
             android:tag="Metering Mode"
             android:layout_width="0dp"
@@ -37,15 +26,31 @@
             android:layout_weight="1"
             android:contentDescription="@string/meteringMode"
             />
+    </TableRow>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" >
         <Spinner
-            android:id="@+id/FlashModeSpinner"
-            android:tag="Flash Mode"
+            android:tag="Autofocus Mode"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        <Spinner
+            android:tag="Autofocus Points"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
     </TableRow>
     <TableRow
         android:layout_width="match_parent">
+        <Spinner
+            android:id="@+id/FlashModeSpinner"
+            android:tag="Flash Mode"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
         <TextView
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
@@ -83,7 +88,7 @@
     </TableRow>
     <TableRow>
         <Spinner
-            android:tag="String:Image Tone"
+            android:tag="String:JPEG Image Tone"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />

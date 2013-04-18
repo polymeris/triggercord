@@ -4,9 +4,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import android.app.Activity;
 import android.content.res.Resources;
-import android.content.Context;
+import android.content.*;
 import android.os.Bundle;
 import android.os.Environment;
+import android.net.*;
 import android.util.Log;
 import android.graphics.*;
 import android.graphics.drawable.Drawable;
@@ -28,6 +29,7 @@ public class Triggercord extends Activity implements
     protected ImageView isoIcon, apertureIcon, shutterIcon, ecIcon;
     protected ImageView photo;
     private Bitmap currentImage;
+    protected String filename;
     
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -76,6 +78,30 @@ public class Triggercord extends Activity implements
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.triggercord, menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId())
+        {
+            case R.id.helpMenuItem:
+                String path = getResources().getString(R.string.helpPath);
+                Intent viewHelp = new Intent(Intent.ACTION_VIEW, Uri.parse(path));
+                startActivity(viewHelp);
+                return true;
+            case R.id.shareMenuItem:
+                if (filename == null)
+                    return true;
+                Intent share = new Intent();
+                share.setAction(Intent.ACTION_SEND);
+                share.putExtra(Intent.EXTRA_STREAM, filename);
+                share.setType("image/jpeg");
+                startActivity(Intent.createChooser(share,
+                    getResources().getText(R.string.shareTitle)));
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     protected void registerChildListeners(ViewGroup vg)
@@ -139,7 +165,7 @@ public class Triggercord extends Activity implements
 
         if (parent.getId() == R.id.triggerButton)
         {
-            String filename = camera.shoot();
+            filename = camera.shoot();
             status.setText("Shot. Saved to ");
             status.append(filename);
             BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
@@ -308,7 +334,7 @@ public class Triggercord extends Activity implements
                 view.setLayoutParams(new GridView.LayoutParams(
                     GridView.LayoutParams.WRAP_CONTENT, GridView.LayoutParams.WRAP_CONTENT));
                 view.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                view.setPadding(0, 0, 0, 0);
+                //~ view.setPadding(0, 0, 0, 0);
                 view.setImageResource(id);
                 return view;
             }

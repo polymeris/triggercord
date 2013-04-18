@@ -34,5 +34,12 @@
     <string name="flashEC">Flash Exposure\nCompensation</string>
     <string name="focusLinked">Focus on Trigger</string>
     <string name="focusNotLinked">Independant Focus</string>
-    <string name="settingsTitle">Settings</string>
+    <string name="settingsTitle">Adjustments</string>
+    <string name="infoTitle">Info</string>
+    <string name="helpTitle">Help</string>
+    <string name="reconnectAction">Reconnect</string>
+    <string name="shareAction">Share</string>
+    <string name="deleteAction">Delete</string>
+    <string name="helpPath">http://polymeris.github.com/triggercord/Manual</string>
+    <string name="shareTitle">Share JPEG image with...</string>
 </resources>

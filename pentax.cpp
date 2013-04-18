@@ -22,7 +22,8 @@ const static int MIN_UPDATE_INTERVAL = 2; // seconds
 
 static char *theDevice = NULL;
 pthread_t theUpdateThread;
-pthread_mutex_t theMutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER;;
+//~ pthread_mutex_t theMutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER;
+pthread_mutex_t theMutex = PTHREAD_MUTEX_INITIALIZER;
 bool theUpdateThreadRunning, theUpdateThreadExitFlag;
 static pslr_handle_t theHandle;
 static pslr_status theStatus;
@@ -402,26 +403,49 @@ namespace xtern
     #include "pslr_strings.h"
 }
 
-const char* EXPOSURE_MODES[] = {
+const char * EXPOSURE_MODES[] = {
     "P", "Green", "?", "?", "?", "Tv", "Av", "?", "?", "M", "B", "Av", "M", "B", "TAv", "Sv", "X"
 };
 
+const char * FLASH_MODES[] = {
+    "Auto",
+    "Manual",
+    "Manual Red-Eye",
+    "Trailing Curtain",
+    "Wireless"
+};
+
+const char * FILE_FORMATS[] = {"JPEG only", "RAW+"};
+const char * EV_STEP_OPTIONS[] = {"1/2 stop", "1/3 stop"};
+
+int setAFMode(pslr_handle_t, int)
+{
+    return 0;
+}
+
 const StringParameter STRING_PARAMETERS[] =
 {
-    {"File Destination", NULL, NULL, NULL },
-    //~ {"Flash Mode", &theStatus.flash_mode, (Setter)&pslr_set_flash_mode,
-	//~ xtern::pslr_flash_mode_str, PSLR_FLASH_MODE_MAX}, 
     {"Drive Mode", &theStatus.drive_mode, (Setter)&pslr_set_drive_mode,
 	xtern::pslr_drive_mode_str, PSLR_DRIVE_MODE_MAX},
-    //~ {"Autofocus Mode", &theStatus.af_mode, (Setter)&pslr_set_af_mode,
-	//~ xtern::pslr_af_mode_str, PSLR_AF_MODE_MAX}, //THIS CAUSES A BUG, MAYBE BECAUSE MF MUST
-	// BE SET PHYSICALLY
+    {"Autofocus Points", &theStatus.af_point_select, (Setter)&pslr_set_af_point_sel,
+	xtern::pslr_af_point_sel_str, PSLR_AF_POINT_SEL_MAX}, 
     {"Metering Mode", &theStatus.ae_metering_mode, (Setter)&pslr_set_ae_metering_mode,
 	xtern::pslr_ae_metering_str, PSLR_AE_METERING_MAX},
     {"Color Space", &theStatus.color_space, (Setter)&pslr_set_color_space,
 	xtern::pslr_color_space_str, PSLR_COLOR_SPACE_MAX},
-    {"Exposure Mode", &theStatus.exposure_mode, NULL,
-	EXPOSURE_MODES, PSLR_EXPOSURE_MODE_MAX}
+    {"JPEG Image Tone", &theStatus.jpeg_image_tone, (Setter)&pslr_set_jpeg_image_tone,
+	xtern::pslr_jpeg_image_tone_str, PSLR_JPEG_IMAGE_TONE_MAX},
+    {"Whitebalance Mode", &theStatus.white_balance_mode, (Setter)&pslr_set_white_balance,
+	xtern::pslr_white_balance_mode_str, PSLR_WHITE_BALANCE_MODE_MANUAL + 1},
+    // These are handled manually, at least partially:
+    {"Exposure Mode", &theStatus.exposure_mode, NULL, EXPOSURE_MODES, PSLR_EXPOSURE_MODE_MAX},
+    {"Flash Mode", NULL, NULL, FLASH_MODES, sizeof(FLASH_MODES) / sizeof(char*)},
+    {"Autofocus Mode", &theStatus.af_mode, setAFMode, xtern::pslr_af_mode_str, PSLR_AF_MODE_MAX},
+    {"File Destination", NULL, NULL, NULL, -1 },
+    {"File Format", NULL, NULL, FILE_FORMATS, 2},
+    {"EV Steps", NULL, NULL, EV_STEP_OPTIONS, 2},
+    {"Camera Model", NULL, NULL, NULL, -1},
+    {"Lens Model", NULL, NULL, NULL, -1},
 };
 
 int findStringParameter(const std::string & name)

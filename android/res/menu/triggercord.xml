@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+     <item android:id="@+id/settingsMenuItem"
+          android:icon="@drawable/settings"
+          android:title="@string/settingsTitle"
+          android:showAsAction="ifRoom|withText" />
+     <item android:id="@+id/reconnectItem"
+          android:icon="@drawable/reconnect"
+          android:title="@string/reconnectAction"
+          android:showAsAction="ifRoom|withText" />
+     <item android:id="@+id/infoMenuItem"
+          android:icon="@drawable/about"
+          android:title="@string/infoTitle"
+          android:showAsAction="ifRoom|withText" />
+     <item android:id="@+id/shareMenuItem"
+          android:icon="@drawable/share"
+          android:title="@string/shareAction"
+          android:showAsAction="ifRoom" />
+     <item android:id="@+id/deleteMenuItem"
+          android:icon="@drawable/delete"
+          android:title="@string/deleteAction"
+          android:showAsAction="ifRoom" />
+     <item android:id="@+id/helpMenuItem"
+          android:icon="@drawable/help"
+          android:title="@string/helpTitle"
+          android:showAsAction="ifRoom|withText" />
+</menu>
