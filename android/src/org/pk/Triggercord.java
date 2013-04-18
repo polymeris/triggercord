@@ -30,7 +30,6 @@ public class Triggercord extends Activity implements
     public void onCreate(Bundle savedInstanceState)
     {
     	super.onCreate(savedInstanceState);
-    	requestWindowFeature(Window.FEATURE_NO_TITLE);
     	setContentView(R.layout.triggercord);
 
         mode =          (TextView)findViewById(R.id.modeText);
@@ -114,6 +113,8 @@ public class Triggercord extends Activity implements
 
     public void onUpdate()
     {
+        if (status == null)
+            return;
         if (!loadCamera())
             return;
         updateChildren((ViewGroup)findViewById(R.id.mainFragment));
@@ -138,8 +139,11 @@ public class Triggercord extends Activity implements
             return;
         }
 
-        if (parent.getId() == R.id.triggerButton)
+        if (parent.getId() == R.id.focusButton)
             camera.focus();
+
+        if (parent.getId() == R.id.settingsButton)
+        {}
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int pos, long id)
