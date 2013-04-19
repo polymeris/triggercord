@@ -92,7 +92,7 @@
 
       <Button
             android:id="@+id/greenButton"
-            android:tag="Action:Green"
+            android:tag="Green"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_alignParentBottom ="true"
@@ -112,7 +112,7 @@
             android:layout_height="fill_parent"
             android:layout_centerInParent="true"
             android:contentDescription="@string/latestPhoto"
-            android:scaleType="center"
+            android:scaleType="centerInside"
             android:src="@drawable/icon" />
 
         <TextView
@@ -126,7 +126,6 @@
 
         <Button
             android:id="@+id/triggerButton"
-            android:tag="Action:Shoot"
             android:layout_width="96dp"
             android:layout_height="96dp"
             android:layout_alignParentBottom="true"
@@ -135,7 +134,6 @@
 
         <Button
             android:id="@+id/focusButton"
-            android:tag="Action:Focus"
             android:layout_width="wrap_content"
             android:layout_height="64dp"
             android:layout_alignParentBottom ="true"

@@ -180,6 +180,19 @@ public class Triggercord extends Activity implements
                 else if (p[0] == "String")
                     text.setText(camera.getString(p[1]));
             }
+            else if (child instanceof SeekBar)
+            {
+                SeekBar bar = (SeekBar)child;
+                String param = (String)bar.getTag();
+                if (param == null)
+                    continue;
+                param.replace("Stop:", "");
+                Stop stop = camera.getStop(param);
+                if (stop.isUnknown())
+                    continue;
+                bar.setMax(camera.getMaximum(param).asInt());
+                bar.setProgress(stop.asInt());
+            }
             else if (child instanceof ViewGroup)
                 this.updateChildren((ViewGroup)child);
         }
@@ -207,7 +220,7 @@ public class Triggercord extends Activity implements
             status.setText("Shot. Saved to ");
             status.append(filename);
             BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
-            bitmapOptions.inSampleSize = 4;
+            bitmapOptions.inSampleSize = 8;
             currentImage = BitmapFactory.decodeFile(filename, bitmapOptions);
             photo.setImageBitmap(currentImage);
             return;
@@ -251,10 +264,11 @@ public class Triggercord extends Activity implements
     {
         if (camera == null || !fromUser)
             return;
-        String[] p = ((String)seekBar.getTag()).split(":");
-        if (p.length < 2 || p[0] == "String")
+        String param = (String)seekBar.getTag();
+        if (param == null)
             return;
-        camera.setStopByIndex(p[1], progress);
+        param.replace("Stop:", "");
+        camera.setStopByIndex(param, progress);
     }
     
     public void onStartTrackingTouch(SeekBar seekBar)
@@ -383,6 +397,10 @@ public class Triggercord extends Activity implements
                 view = (TextView)convertView;
             else
                 view = new TextView(context);
+            if (item == "AUTO")
+                view.setTextColor(Color.parseColor("#1eb61eff"));
+            else
+                view.setTextColor(Color.parseColor("#fff3f3f3"));
             view.setText(item);
             return view;
         }

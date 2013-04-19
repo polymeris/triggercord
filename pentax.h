@@ -51,6 +51,9 @@ public:
     int asInt() const;
     int asExposureSteps() const;
 
+    bool isAuto() const;
+    bool isUnknown() const;
+
     std::string getPrettyString() const;
     std::string getSecondsString() const;
     std::string getOneOverString(bool denomOnly = false) const;

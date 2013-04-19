@@ -64,8 +64,8 @@ float rationalAsFloat(pslr_rational_t r)
     return float(r.nom) / float(r.denom);
 }
 
-const Stop Stop::UNKNOWN = Stop(-1000);
-const Stop Stop::AUTO = Stop(-2000);
+const Stop Stop::UNKNOWN = Stop(-10);
+const Stop Stop::AUTO = Stop(-20);
 const Stop Stop::HALF = Stop::fromHalfStops(1);
 const Stop Stop::THIRD = Stop::fromThirdStops(1);
 
@@ -201,6 +201,16 @@ int Stop::asISO() const
 float Stop::asExposureCompensation() const
 {
     return roundToSignificantDigits((float)sixthStops / 6., 3);
+}
+
+bool Stop::isUnknown() const
+{
+    return *this == Stop::UNKNOWN;
+}
+
+bool Stop::isAuto() const
+{
+    return *this == Stop::AUTO;
 }
 
 int Stop::asInt() const
@@ -345,12 +355,19 @@ void Camera::setStringByIndex(const Parameter & p, int i)
 
 Stop Camera::getStop(const Parameter & p) const
 {
+    std::map<Parameter, Stop>::const_iterator it;
     LOCK_MUTEX;
-    std::map<Parameter, Stop>::const_iterator it = currentStopValues.find(p);
+    it = requestedStopChanges.find(p);
     UNLOCK_MUTEX;
-    if (it == currentStopValues.end())
-	return Stop::UNKNOWN;
-    return it->second;
+    if (it != requestedStopChanges.end())
+	return it->second;
+    
+    LOCK_MUTEX;
+    it = currentStopValues.find(p);
+    UNLOCK_MUTEX;
+    if (it != currentStopValues.end())
+	return it->second;
+    return Stop::UNKNOWN;
 }
 
 std::string Camera::getString(const Parameter & p) const
@@ -369,7 +386,7 @@ std::string Camera::getString(const Parameter & p) const
 Stop Camera::getMinimum(const Parameter & p) const
 {
     if (p == "Shutterspeed")
-	return Stop::fromShuttertime(30);
+	return Stop::fromShutterspeed(pslr_get_model_fastest_shutter_speed(theHandle));
     if (p == "Aperture")
 	return Stop::fromAperture(rationalAsFloat(theStatus.lens_min_aperture));
     if (p == "ISO")
@@ -377,16 +394,16 @@ Stop Camera::getMinimum(const Parameter & p) const
     if (p == "Exposure Compensation")
 	return Stop::fromExposureCompensation(-5);
     if (p == "Flash Exposure Compensation")
-	return -3;
+	return 0;
     if (p == "JPEG Sharpness" || p == "JPEG Contrast" ||p == "JPEG Saturation" || p == "JPEG Hue")
-	return -pslr_get_model_jpeg_property_levels(theHandle) / 2;
+	return 0;
     return Stop();
 }
 
 Stop Camera::getMaximum(const Parameter & p) const
 {
     if (p == "Shutterspeed")
-	return Stop::fromShuttertime(rationalAsFloat(theStatus.max_shutter_speed));
+	return Stop::fromShuttertime(30);
     if (p == "Aperture")
 	return Stop::fromAperture(rationalAsFloat(theStatus.lens_max_aperture));
     if (p == "ISO")
@@ -394,9 +411,9 @@ Stop Camera::getMaximum(const Parameter & p) const
     if (p == "Exposure Compensation")
 	return Stop::fromExposureCompensation(5);
     if (p == "Flash Exposure Compensation")
-	return 3;
+	return 5;
     if (p == "JPEG Sharpness" || p == "JPEG Contrast" ||p == "JPEG Saturation" || p == "JPEG Hue")
-	return pslr_get_model_jpeg_property_levels(theHandle) / 2;
+	return pslr_get_model_jpeg_property_levels(theHandle);
     return Stop();
 }
 
@@ -417,7 +434,7 @@ namespace xtern
 }
 
 const char * EXPOSURE_MODES[] = {
-    "P", "Green", "?", "?", "?", "Tv", "Av", "?", "?", "M", "B", "Av", "M", "B", "TAv", "Sv", "X"
+    "P", "P", "P", "P", "Tv", "Av", "Tv", "Av", "M", "B", "Av", "M", "B", "TAv", "TAv", "Sv", "X"
 };
 
 pslr_exposure_mode_t getExposureMode(bool aA, bool aS, bool aI)
@@ -433,12 +450,6 @@ pslr_exposure_mode_t getExposureMode(bool aA, bool aS, bool aI)
     if (( aA) && ( aS) && (!aI))
 	return PSLR_EXPOSURE_MODE_SV;
     return PSLR_EXPOSURE_MODE_P;
-}
-
-void updateExposureMode()
-{
-    pslr_exposure_mode_t m = getExposureMode(apertureIsAuto, shutterIsAuto, isoIsAuto);
-    pslr_set_exposure_mode(theHandle, m);
 }
 
 const char * FLASH_MODES[] = {
@@ -582,7 +593,7 @@ Stop retrieveStopValue(const Camera::Parameter & p)
     if (p == "Exposure Compensation") return Stop::fromExposureCompensation(asFloat(theStatus.ec));
     if (p == "Flash Exposure Compensation")
 	return Stop::fromExposureCompensation(theStatus.flash_exposure_compensation);
-    if (p == "JPEG Sharpness")  return theStatus.jpeg_sharpness;
+    if (p == "JPEG Sharpness")  return Stop(theStatus.jpeg_sharpness);
     if (p == "JPEG Contrast")   return theStatus.jpeg_contrast;
     if (p == "JPEG Saturation") return theStatus.jpeg_saturation;
     if (p == "JPEG Hue")        return theStatus.jpeg_hue;
@@ -629,7 +640,9 @@ bool updateExposureIfNecessary(bool & b, const Stop & s)
     if(b != (s == Stop::AUTO))
     {
 	b = (s == Stop::AUTO);
-	updateExposureMode();
+	pslr_exposure_mode_t m = getExposureMode(apertureIsAuto, shutterIsAuto, isoIsAuto);
+	pslr_set_exposure_mode(theHandle, m);
+	pslr_get_status(theHandle, &theStatus);
     }
     return b;
 }
@@ -639,9 +652,9 @@ int sendChange(const Camera::Parameter & p, const Stop & s)
     DPRINT("Sending stop change %s: %s\n", p.c_str(), s.getPrettyString().c_str());
     if (p == "Shutterspeed")
     {
-	if(updateExposureIfNecessary(shutterIsAuto, s))
-	    return 0;
-	return pslr_set_shutter(theHandle, stopAsRationalShuttertime(s));
+	if (s != Stop::AUTO)
+	    pslr_set_shutter(theHandle, stopAsRationalShuttertime(s));
+	updateExposureIfNecessary(shutterIsAuto, s);
     }
     if (p == "Aperture")
     {
@@ -652,7 +665,9 @@ int sendChange(const Camera::Parameter & p, const Stop & s)
     if (p == "ISO")
     {
 	updateExposureIfNecessary(isoIsAuto, s);
-	return pslr_set_iso(theHandle, s.asISO(), s.asISO(), s.asISO());
+	return pslr_set_iso(theHandle, s.asISO(),
+	    pslr_get_model_extended_iso_min(theHandle),
+	    pslr_get_model_extended_iso_max(theHandle));
     }
     if (p == "Exposure Compensation")
 	return pslr_set_ec(theHandle, stopAsRationalExposureCompensation(s));

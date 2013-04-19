@@ -64,7 +64,7 @@
             android:layout_weight="1"
             android:text="@string/flashEC" />
         <SeekBar
-            android:tag="Stop:Flash Exposure Compensation"
+            android:tag="Flash Exposure Compensation"
             android:layout_height="wrap_content"
             android:layout_weight="3"
             />
@@ -79,7 +79,7 @@
     <TableRow>
         <ToggleButton
             android:id="@+id/RawToggle"
-            android:tag="String:Image Format"
+            android:tag="Image Format"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="@string/raw"
@@ -87,14 +87,14 @@
             android:textOn="@string/rawOnly" />
         <Spinner
             android:id="@+id/ResolutionSpinner"
-            android:tag="String:JPEG Resolution"
+            android:tag="JPEG Resolution"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
     </TableRow>
     <TableRow>
         <Spinner
-            android:tag="String:JPEG Image Tone"
+            android:tag="JPEG Image Tone"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
@@ -109,7 +109,7 @@
             android:layout_weight="1"
             android:text="@string/jpegQuality" />
         <SeekBar
-            android:tag="Stop:JPEG Quality"
+            android:tag="JPEG Quality"
             android:layout_height="wrap_content"
             android:layout_weight="3"
             />
@@ -123,7 +123,7 @@
             android:layout_weight="1"
             android:text="@string/jpegSharpness" />
         <SeekBar
-            android:tag="Stop:JPEG Sharpness"
+            android:tag="JPEG Sharpness"
             android:layout_height="wrap_content"
             android:layout_weight="3"
             />
@@ -137,7 +137,7 @@
             android:layout_weight="1"
             android:text="@string/jpegContrast" />
         <SeekBar
-            android:tag="Stop:JPEG Contrast"
+            android:tag="JPEG Contrast"
             android:layout_height="wrap_content"
             android:layout_weight="3" />
     </TableRow>
@@ -150,7 +150,7 @@
             android:layout_weight="1"
             android:text="@string/jpegSaturation" />
         <SeekBar
-            android:tag="Stop:JPEG Saturation"
+            android:tag="JPEG Saturation"
             android:layout_height="wrap_content"
             android:layout_weight="3" />
     </TableRow>
@@ -163,7 +163,7 @@
             android:layout_weight="1"
             android:text="@string/jpegHue" />
         <SeekBar
-            android:tag="Stop:JPEG Hue"
+            android:tag="JPEG Hue"
             android:layout_height="wrap_content"
             android:layout_weight="3" />
     </TableRow>
@@ -176,12 +176,12 @@
 
     <TableRow>
         <Spinner
-            android:tag="String:Whitebalance Mode"
+            android:tag="Whitebalance Mode"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
         <Spinner
-            android:tag="String:Color Space"
+            android:tag="Color Space"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
@@ -195,7 +195,7 @@
             android:layout_weight="1"
             android:text="@string/mWBAdjustment" />
         <SeekBar
-            android:tag="Stop:Whitebalance Adjustment Magenta/Green"
+            android:tag="Whitebalance Adjustment Magenta/Green"
             android:layout_height="wrap_content"
             android:layout_weight="4"
             />
@@ -215,7 +215,7 @@
             android:layout_weight="1"
             android:text="@string/bWBAdjustment" />
         <SeekBar
-            android:tag="Stop:Whitebalance Adjustment Blue/Amber"
+            android:tag="Whitebalance Adjustment Blue/Amber"
             android:layout_height="wrap_content"
             android:layout_weight="4"
             />
@@ -246,7 +246,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" 
-            android:tag="String:EV Step"
+            android:tag="EV Steps"
             />
     </TableRow>
     <TableRow>
@@ -255,7 +255,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1" 
             android:layout_gravity="center"
-            android:tag="String:Lens Model"
+            android:tag="Lens Model"
             android:text="Unknown Lens" />
     </TableRow>
 
