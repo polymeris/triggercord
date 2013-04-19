@@ -369,10 +369,12 @@ public class Triggercord extends Activity implements
                     view = (ImageView)convertView;
                 else
                     view = new ImageView(context);
-                view.setLayoutParams(new GridView.LayoutParams(
-                    GridView.LayoutParams.WRAP_CONTENT, GridView.LayoutParams.WRAP_CONTENT));
-                view.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                //~ view.setPadding(0, 0, 0, 0);
+                AbsListView.LayoutParams layout = new AbsListView.LayoutParams(
+                    AbsListView.LayoutParams.MATCH_PARENT,
+                    AbsListView.LayoutParams.WRAP_CONTENT);
+                view.setLayoutParams(layout);
+                view.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                view.setPadding(0, 4, 0, 4);
                 view.setImageResource(id);
                 return view;
             }
